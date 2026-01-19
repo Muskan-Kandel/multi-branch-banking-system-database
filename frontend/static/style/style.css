@@ -1,0 +1,10 @@
+/* Sidebar Links */
+.sidebar-link
+{
+    text-decoration: none;
+    color: #6c757d; 
+}
+.sidebar-link:hover
+{
+    font-weight:bold;
+}
