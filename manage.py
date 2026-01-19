@@ -1,7 +1,10 @@
-from django.urls import path
-from . import views
+import os
+import sys
 
-urlpatterns = [
-    path('login/', views.login_view, name='login'),
-    path('dashboard/', views.dashboard_view, name='dashboard'),
-]
+if __name__ == "__main__":
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ibank.settings")  # ← ibank not ibank_project
+    try:
+        from django.core.management import execute_from_command_line
+    except ImportError as exc:
+        raise ImportError("Couldn't import Django.") from exc
+    execute_from_command_line(sys.argv)
