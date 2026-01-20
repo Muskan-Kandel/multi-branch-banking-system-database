@@ -15,15 +15,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'core',   # your app
-]
+    'core',   
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',   # REQUIRED (must be before auth)
+    'django.contrib.sessions.middleware.SessionMiddleware',   
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',  # REQUIRED
-    'django.contrib.messages.middleware.MessageMiddleware',     # REQUIRED
+    'django.contrib.auth.middleware.AuthenticationMiddleware',  
+    'django.contrib.messages.middleware.MessageMiddleware',     
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
@@ -38,9 +37,9 @@ TEMPLATES = [
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
-                'django.template.context_processors.request',   # REQUIRED
-                'django.contrib.auth.context_processors.auth',  # REQUIRED
-                'django.contrib.messages.context_processors.messages',  # REQUIRED
+                'django.template.context_processors.request',   
+                'django.contrib.auth.context_processors.auth',  
+                'django.contrib.messages.context_processors.messages',  
             ],
         },
     },
