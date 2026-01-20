@@ -1,0 +1,10 @@
+{% extends "accounts/base.html" %}
+{%block title%} Login - IBANK {%endblock%}
+
+
+{% block content %}
+
+<h1> Dashboard: {{request.user.username}}</h1>
+<a href="{% url 'logout' %}" class="btn-dark">Logout</a>
+<p>Welcome to your dashboard!</p>
+{% endblock %}
