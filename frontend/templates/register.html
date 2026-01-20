@@ -1,72 +1,58 @@
 {% extends "base.html" %}
-{%block title%} Register - IBANK {%endblock%}
+{% load static %}
 
+{% block title %}Register - IBANK{% endblock %}
 
 {% block content %}
-<body>
-    <div class="container d-flex justify-content-center align-items-center mt-5">
-  <div class="col-md-5 register-card">
+<div class="container-fluid min-vh-100 d-flex justify-content-center align-items-center" style="background-color:#040443;">
+    <div class="card p-4" style="max-width:400px; width:100%; border-radius:12px; background-color:#0f024f;">
 
-    <h4 class="text-center mb-4 fw-bold">Create New Account</h4>
+        <h4 class="text-center mb-4 fw-bold text-white">Create New Account</h4>
 
-    <form>
+        <form method="POST" action="{% url 'register' %}">
+            {% csrf_token %}
 
-      <div class="mb-3">
-        <input type="text" class="form-control" placeholder="Full Name" required>
-      </div>
+            <div class="mb-3">
+                <input type="text" name="full_name" class="form-control" placeholder="Full Name" required>
+            </div>
 
-      <div class="mb-3">
-        <input type="email" class="form-control" placeholder="Email Address" required>
-      </div>
+            <div class="mb-3">
+                <input type="email" name="email" class="form-control" placeholder="Email Address" required>
+            </div>
 
-      <div class="mb-3">
-        <input type="text" class="form-control" placeholder="Phone Number" required>
-      </div>
+            <div class="mb-3">
+                <input type="text" name="phone" class="form-control" placeholder="Phone Number" required>
+            </div>
 
-      <div class="mb-3">
-        <input type="text" class="form-control" placeholder="Username" required>
-      </div>
+            <div class="mb-3">
+                <input type="text" name="username" class="form-control" placeholder="Username" required>
+            </div>
 
-      <div class="mb-3">
-    <input type="password" class="form-control" placeholder="Password" required>
-  <div class="col-4">
-    <small class="text-muted">
-      Must be 8–20 characters
-    </small>
-  </div>
-          
- </div>
+            <div class="mb-3">
+                <input type="password" name="password" class="form-control" placeholder="Password" required>
+                <small class="text-secondary">Must be 8–20 characters long</small>
+            </div>
 
-      <div class="mb-3">
-       
-    <input type="password" class="form-control" placeholder="Confirm Password" required>
-  <div class="col-4">
-    <small class="text-muted">
-      Must be 8–20 characters
-    </small>
-  </div>
-      </div>
+            <div class="mb-3">
+                <input type="password" name="confirm_password" class="form-control" placeholder="Confirm Password" required>
+                <small class="text-secondary">Must be 8–20 characters long</small>
+            </div>
 
-      <div class="form-check mb-4">
-        <input class="form-check-input" type="checkbox" id="terms">
-        <label class="form-check-label" for="terms">
-          I agree to terms and conditions
-        </label>
-      </div>
+            <div class="form-check mb-4">
+                <input class="form-check-input" type="checkbox" id="terms" name="terms">
+                <label class="form-check-label text-white" for="terms">
+                    I agree to terms and conditions
+                </label>
+            </div>
 
-      <button type="submit" class="btn btn-secondary w-100 mb-3">
-        Create Account
-      </button>
+            <button type="submit" class="btn btn-light w-100 mb-3">Create Account</button>
 
-      <p class="text-center">
-        Already have an account?
-        <a href="#" class="text-decoration-none">Sign in</a>
-      </p>
+            <p class="text-center text-white">
+                Already have an account?
+                <a href="{% url 'login' %}" class="text-decoration-none text-light fw-bold">Sign In</a>
+            </p>
 
-    </form>
-
-  </div>
+        </form>
+    </div>
 </div>
-
-</body>
 {% endblock %}

@@ -25,3 +25,6 @@ def login_view(request):
 
 def register(request):
     return render(request, 'register.html')
+
+def IBANK(request):
+    return render(request, 'IBANK.html')
