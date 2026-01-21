@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}IBANK- Online Banking{% endblock %}
+{% block content %}
+<style>
+  .left-section {
+    background-image: url("{% static 'bank.png' %}");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    min-height: 100vh;
+  }
+
+</style>
+
+<div class="container-fluid">
+  <div class="row min-vh-100">
+
+    <!-- Left section -->
+    <div class="col-md-6 d-none d-md-block left-section">
+    </div>
+
+
+    <!-- Right section -->
+    <div class="col-md-6 d-flex align-items-center justify-content-center bg-light" >
+
+      <div class="text-center text-white p-4" style="max-width: 400px; width:100%;">
+        <h2 class="mb-4" style="color:rgb(4, 4, 67)">Get Started</h2>
+
+        <a href="{% url 'login' %}" class="btn w-100 mb-3" target="_self" style="background-color:rgb(4, 4, 67); color:white;">
+          Sign In
+        </a>
+
+        <a href="{% url 'register' %}" class="btn btn-outline-secondary w-100" target="_self" style=" border: 2px solid rgb(4, 4, 67);">
+          Create Account
+        </a>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,9 +1,16 @@
 from django.shortcuts import redirect, render
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login, authenticate, logout
-def home(request):
-    return render(request, 'accounts/base.html')
 
+
+
+
+
+def base_view(request):
+    return render(request, 'base.html')
+
+def IBANK(request):
+    return render(request, 'IBANK.html')
 
 def register_view(request):
     if request.method == 'POST':
@@ -16,7 +23,7 @@ def register_view(request):
             print(form.errors)
     else:
         form=UserCreationForm()
-    return render(request, 'accounts/register.html', {'form':form})   
+    return render(request, 'register.html', {'form':form})   
 
 def login_view(request):
     if request.method == 'POST':
@@ -29,12 +36,26 @@ def login_view(request):
             print(form.errors)
     else:
         form=AuthenticationForm()
-    return render(request, 'accounts/login.html', {'form':form})   
+    return render(request, 'login.html', {'form':form})   
 
 def logout_view(request):
     logout(request)
     return redirect('login')
 
 def dashboard(request):
-    return render(request, 'accounts/dashboard.html')
+    return render(request, 'dashboard.html')
 
+def accounts(request):
+    return render(request, 'accounts.html')
+
+def send_money(request):
+    return render(request, 'send money.html')
+
+def transactions(request):
+    return render(request, 'transactions.html')
+
+def beneficiaries(request):
+    return render(request, 'beneficiaries.html')
+
+def profile_and_settings(request):
+    return render(request, 'profile and settings.html')
