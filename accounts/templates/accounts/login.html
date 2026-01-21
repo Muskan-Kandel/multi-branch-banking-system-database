@@ -16,11 +16,11 @@
         <form method="post" action="{% url 'login' %}">
             {% csrf_token %}
             <div class="mb-3">
-                <input type="text" class="form-control" placeholder="Email or Username" required>
+                <input type="text" name="username" class="form-control" placeholder="Username" required>
             </div>
 
             <div class="mb-2">
-                <input type="password" class="form-control" placeholder="Password" required>
+                <input type="password" name="password" class="form-control" placeholder="Password" required>
                 <small class="text-muted">
                     Must be 8–20 characters long
                 </small>

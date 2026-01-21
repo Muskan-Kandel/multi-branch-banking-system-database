@@ -12,24 +12,13 @@
 
     <form method="post" action="{% url 'register' %}">
         {% csrf_token %}
+
       <div class="mb-3">
-        <input type="text" class="form-control" placeholder="Full Name" required>
+        <input type="text" name="username" class="form-control" placeholder="Username" required>
       </div>
 
       <div class="mb-3">
-        <input type="email" class="form-control" placeholder="Email Address" required>
-      </div>
-
-      <div class="mb-3">
-        <input type="text" class="form-control" placeholder="Phone Number" required>
-      </div>
-
-      <div class="mb-3">
-        <input type="text" class="form-control" placeholder="Username" required>
-      </div>
-
-      <div class="mb-3">
-    <input type="password" class="form-control" placeholder="Password" required>
+    <input type="password" name="password1" class="form-control" placeholder="Password" required>
   <div class="col-4">
     <small class="text-muted">
       Must be 8–20 characters
@@ -40,7 +29,7 @@
 
       <div class="mb-3">
        
-    <input type="password" class="form-control" placeholder="Confirm Password" required>
+    <input type="password" name="password2" class="form-control" placeholder="Confirm Password" required>
   <div class="col-4">
     <small class="text-muted">
       Must be 8–20 characters

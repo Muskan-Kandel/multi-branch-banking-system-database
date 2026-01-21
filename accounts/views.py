@@ -12,6 +12,8 @@ def register_view(request):
             user=form.save()
             login(request, user)
             return redirect('dashboard')
+        else:
+            print(form.errors)
     else:
         form=UserCreationForm()
     return render(request, 'accounts/register.html', {'form':form})   
@@ -23,6 +25,8 @@ def login_view(request):
             user=form.get_user()
             login(request, user)
             return redirect('dashboard')
+        else :
+            print(form.errors)
     else:
         form=AuthenticationForm()
     return render(request, 'accounts/login.html', {'form':form})   
