@@ -1,10 +1,154 @@
-{% extends "base.html" %}
-{%block title%} Login - IBANK {%endblock%}
 
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Dashboard - IBANK{% endblock %}
+{% block extra_css %}
+<style>
+.image-slideshow {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+   background: #f8f9fa
+}
+
+.slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain; 
+  opacity: 0;
+  animation: slideshow 6s infinite;
+}
+
+.slide:nth-child(1) { animation-delay: 0s; }
+.slide:nth-child(2) { animation-delay: 3s; }
+/*.slide:nth-child(3) { animation-delay: 6s; } */
+
+@keyframes slideshow {
+  0% { opacity: 0; }
+  10% { opacity: 1; }
+  30% { opacity: 1; }
+  40% { opacity: 0; }
+  100% { opacity: 0; }
+}
+</style>
+{% endblock %}
 
 {% block content %}
 
-<h1> Dashboard: {{request.user.username}}</h1>
-<a href="{% url 'logout' %}" class="btn-dark">Logout</a>
-<p>Welcome to your dashboard!</p>
+<div class="container">
+
+  <!-- Account Summary (Half Width) -->
+  <div class="row">
+    <div class="col-md-8 mt-4">
+      <div class="card shadow-sm mb-3">
+        <div class="card-header text-white" style="background-color:#0f024f;">
+          Account Summary
+        </div>
+
+        <div class="card-body">
+          <h6 class="card-title mb-2">
+            {{ user.username }}
+          </h6>
+
+          <p class="mb-1">
+            <strong>Account Number:</strong>
+            {{ account.account_number }}
+          </p>
+
+          <p class="mb-1">
+            <strong>Account Type:</strong>
+            {{ account.account_type }}
+          </p>
+
+          <p class="mb-0">
+            <strong>Available Balance:</strong>
+            <span class="text-success fw-bold">
+              NPR {{ account.balance }}
+            </span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Quick Actions-->
+      <div class="mb-4">
+        <a class="btn btn-sm me-2 mb-2"
+           style="background-color:#0f024f;color:white;"
+           href="{% url 'send money' %}">
+          Send
+        </a>
+
+        <a class="btn btn-sm me-2 mb-2"
+           style="background-color:#0f024f;color:white;"
+           href="{% url 'transactions' %}">
+          Transactions
+        </a>
+
+        <a class="btn btn-sm me-2 mb-2"
+           style="background-color:#0f024f;color:white;"
+           href="{% url 'beneficiaries' %}">
+          Beneficiary
+        </a>
+
+        <a class="btn btn-sm mb-2"
+           style="background-color:#0f024f;color:white;"
+           href="{% url 'profile and settings' %}">
+          Profile
+        </a>
+      </div>
+
+      <!-- Recent Transactions -->
+      <div class="card shadow-sm">
+        <div class="card-header" 
+            style="background-color:#0f024f;color:white;">
+          Recent Transactions
+        </div>
+
+        <div class="card-body p-0">
+          <table class="table table-sm mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Date</th>
+                <th>Description</th>
+                <th class="text-end">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for tx in transactions %}
+              <tr>
+                <td>{{ tx.created_at|date:"d M" }}</td>
+                <td>{{ tx.description }}</td>
+                <td class="text-end
+                  {% if tx.transaction_type == 'credit' %}
+                    text-success
+                  {% else %}
+                    text-danger
+                  {% endif %}">
+                  {{ tx.amount }}
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="3" class="text-center text-muted">
+                  No recent transactions
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  <!-- image stack -->
+    <div class="col-md-4 p-0" >
+      <div class="image-slideshow w-100">
+        <img src="{% static 'img1.png' %}" class="slide">
+        <img src="{% static 'img2.png' %}" class="slide">
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}

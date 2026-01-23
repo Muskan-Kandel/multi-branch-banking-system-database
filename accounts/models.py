@@ -25,7 +25,7 @@ class Account(models.Model):
         ('savings', 'Savings'),
         ('current', 'Current'),
     ]
-
+    account_number = models.CharField(max_length=20, unique=True)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     branch = models.ForeignKey(Branch, on_delete=models.SET_NULL, null=True)
     account_type = models.CharField(max_length=20, choices=ACCOUNT_TYPES)
