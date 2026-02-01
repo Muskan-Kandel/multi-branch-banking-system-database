@@ -15,7 +15,8 @@
 <body>
 
 <!-- Navbar -->
-<nav class="navbar navbar-light bg-light fixed-top">
+<nav class="navbar navbar-light bg-light fixed-top">git switch -c sneha-branch
+
   <div class="container">
     <a class="navbar-brand" href="#">
       <img src="{% static 'logo.png' %}" alt="logo" width="200px" height="50px">
@@ -47,16 +48,16 @@
 
     <!-- Sidebar Links -->
     <div class="d-flex flex-column p-3 gap-2 ">
-      <a href="{% url 'dashboard' %}" class="sidebar-link"><i class="bi bi-speedometer2 me-2"></i>Destination</a>
-      <a href="{% url 'accounts' %}" class="sidebar-link"><i class="bi bi-wallet2 me-2"></i>Accounts</a>
-      <a href="{% url 'send money' %}" class="sidebar-link"><i class="bi bi-send me-2"></i>Send Money</a>
-      <a href="{% url 'transactions' %}" class="sidebar-link"><i class="bi bi-list-check me-2"></i>Transactions</a>
-      <a href="{% url 'beneficiaries' %}" class="sidebar-link"><i class="bi bi-people me-2"></i>Beneficiaries</a>
+      <a href="/" class="sidebar-link"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a>
+      <a href="/accounts/" class="sidebar-link"><i class="bi bi-wallet2 me-2"></i>Accounts</a>
+      <a href="/send money/" class="sidebar-link"><i class="bi bi-send me-2"></i>Send Money</a>
+      <a href="/transactions/" class="sidebar-link"><i class="bi bi-list-check me-2"></i>Transactions</a>
+      <a href="/beneficiaries/" class="sidebar-link"><i class="bi bi-people me-2"></i>Beneficiaries</a>
     </div>
 
     <!-- Bottom Link -->
     <div class="p-3">
-      <a href="{% url 'profile and settings' %}" class="sidebar-link"><i class="bi bi-person-circle me-2"></i>Profile and Settings</a>
+      <a href="/profiles and settings/" class="sidebar-link"><i class="bi bi-person-circle me-2"></i>Profile & Settings</a>
     </div>
   </div>
 </div>
@@ -66,10 +67,10 @@
   <div class="row">
 
     <!-- space for sidebar for desktop -->
-    <!-- <div class="col-lg-2 d-none d-lg-block" style="min-height: calc(100vh - 70px);"></div> -->
+    <div class="col-lg-2 d-none d-lg-block" style="min-height: calc(100vh - 70px);"></div>
 
     <!-- page content -->
-    <div class="col-lg-12">
+    <div class="col-lg-10">
       {% block content %}
       <!-- each page content goes here -->
       {% endblock %}
