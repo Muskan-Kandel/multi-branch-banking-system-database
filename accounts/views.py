@@ -3,6 +3,9 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login, authenticate, logout
 
 
+from django.contrib.auth.decorators import login_required
+
+
 
 
 
@@ -42,20 +45,26 @@ def logout_view(request):
     logout(request)
     return redirect('login')
 
+@login_required
 def dashboard(request):
     return render(request, 'dashboard.html')
 
+@login_required
 def accounts(request):
     return render(request, 'accounts.html')
 
+@login_required
 def send_money(request):
     return render(request, 'send money.html')
 
+@login_required
 def transactions(request):
     return render(request, 'transactions.html')
 
+@login_required
 def beneficiaries(request):
     return render(request, 'beneficiaries.html')
 
+@login_required
 def profile_and_settings(request):
     return render(request, 'profile and settings.html')
