@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% block title %}Transactions - IBANK{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-4">
+    
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="fw-bold">Transaction History</h2>
+            <p class="text-muted">View and filter all your transactions</p>
+        </div>
+    </div>
+
+    <!-- Filter Card -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="card-title mb-3">
+                <i class="bi bi-funnel me-2"></i>Filter Transactions
+            </h5>
+            <form method="GET" action="{% url 'transactions' %}">
+                <div class="row g-3">
+                    <!-- Account Filter -->
+                    <div class="col-md-4">
+                        <label for="account" class="form-label">Account</label>
+                        <select name="account" id="account" class="form-select">
+                            <option value="">All Accounts</option>
+                            {% for account in accounts %}
+                            <option value="{{ account.id }}" {% if selected_account == account.id|stringformat:"s" %}selected{% endif %}>
+                                Account #{{ account.id }} - {{ account.account_type|title }} (${{ account.balance }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Type Filter -->
+                    <div class="col-md-4">
+                        <label for="type" class="form-label">Transaction Type</label>
+                        <select name="type" id="type" class="form-select">
+                            <option value="">All Types</option>
+                            <option value="deposit" {% if selected_type == 'deposit' %}selected{% endif %}>Deposit</option>
+                            <option value="withdraw" {% if selected_type == 'withdraw' %}selected{% endif %}>Withdraw</option>
+                            <option value="transfer" {% if selected_type == 'transfer' %}selected{% endif %}>Transfer</option>
+                        </select>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="col-md-4 d-flex align-items-end gap-2">
+                        <button type="submit" class="btn btn-primary flex-grow-1">
+                            <i class="bi bi-search me-1"></i>Apply
+                        </button>
+                        <a href="{% url 'transactions' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-lg"></i>
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Transactions Card -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Recent Transactions</h5>
+            <span class="badge bg-light text-primary">{{ transactions|length }} transaction{{ transactions|length|pluralize }}</span>
+        </div>
+
+        <div class="card-body p-0">
+            {% if transactions %}
+                <!-- Transactions List -->
+                <div class="list-group list-group-flush">
+                    {% for transaction in transactions %}
+                    <div class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between align-items-center">
+                            
+                            <!-- Left: Icon and Details -->
+                            <div class="d-flex align-items-center">
+                                <!-- Transaction Icon -->
+                                <div class="me-3">
+                                    {% if transaction.transaction_type == 'deposit' %}
+                                        <div class="bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                                            <i class="bi bi-arrow-down-circle fs-4"></i>
+                                        </div>
+                                    {% elif transaction.transaction_type == 'withdraw' %}
+                                        <div class="bg-danger bg-opacity-10 text-danger rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                                            <i class="bi bi-arrow-up-circle fs-4"></i>
+                                        </div>
+                                    {% else %}
+                                        <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                                            <i class="bi bi-arrow-left-right fs-4"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Transaction Details -->
+                                <div>
+                                    <h6 class="mb-1 fw-semibold">{{ transaction.transaction_type|title }}</h6>
+                                    <div class="small text-muted">
+                                        <i class="bi bi-calendar3 me-1"></i>{{ transaction.timestamp|date:"M d, Y" }}
+                                        <span class="mx-2">•</span>
+                                        <i class="bi bi-clock me-1"></i>{{ transaction.timestamp|time:"h:i A" }}
+                                        <span class="mx-2">•</span>
+                                        <i class="bi bi-credit-card me-1"></i>Account #{{ transaction.account_id }}
+                                        <span class="badge bg-secondary bg-opacity-10 text-secondary ms-1">{{ transaction.account_type }}</span>
+                                    </div>
+                                    {% if transaction.description %}
+                                    <div class="small text-muted mt-1">
+                                        <i class="bi bi-journal-text me-1"></i>{{ transaction.description }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Right: Amount -->
+                            <div class="text-end">
+                                {% if transaction.transaction_type == 'deposit' %}
+                                    <h5 class="mb-0 text-success fw-bold">+${{ transaction.amount }}</h5>
+                                {% elif transaction.transaction_type == 'withdraw' %}
+                                    <h5 class="mb-0 text-danger fw-bold">-${{ transaction.amount }}</h5>
+                                {% else %}
+                                    <h5 class="mb-0 text-primary fw-bold">${{ transaction.amount }}</h5>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+            {% else %}
+                <!-- Empty State -->
+                <div class="text-center py-5">
+                    <i class="bi bi-receipt text-muted" style="font-size: 4rem;"></i>
+                    <h5 class="mt-3 text-muted">No Transactions Found</h5>
+                    <p class="text-muted">
+                        {% if selected_account or selected_type %}
+                            Try adjusting your filters or <a href="{% url 'transactions' %}" class="text-decoration-none">clear all filters</a>
+                        {% else %}
+                            You haven't made any transactions yet.
+                        {% endif %}
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Transaction Summary Cards (Optional) -->
+    {% if transactions %}
+    <div class="row mt-4 g-3">
+        <div class="col-md-4">
+            <div class="card border-success">
+                <div class="card-body text-center">
+                    <i class="bi bi-arrow-down-circle text-success fs-3"></i>
+                    <h6 class="text-muted mt-2 mb-1">Total Deposits</h6>
+                    <h4 class="text-success mb-0">
+                        {% for t in transactions %}
+                            {% if t.transaction_type == 'deposit' %}
+                                <!-- Count deposits -->
+                            {% endif %}
+                        {% endfor %}
+                        {{ transactions|length }} transactions
+                    </h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-danger">
+                <div class="card-body text-center">
+                    <i class="bi bi-arrow-up-circle text-danger fs-3"></i>
+                    <h6 class="text-muted mt-2 mb-1">Total Withdrawals</h6>
+                    <h4 class="text-danger mb-0">
+                        {{ transactions|length }} transactions
+                    </h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-primary">
+                <div class="card-body text-center">
+                    <i class="bi bi-arrow-left-right text-primary fs-3"></i>
+                    <h6 class="text-muted mt-2 mb-1">Total Transfers</h6>
+                    <h4 class="text-primary mb-0">
+                        {{ transactions|length }} transactions
+                    </h4>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{%block title%} Login - IBANK {%endblock%}
+{% block title %} Login - IBANK {% endblock %}
 
 
 {% block content %}
@@ -8,11 +8,24 @@
     <div class="col-md-4 login-card">
 
         <h4 class="text-center mb-4 fw-bold">Sign In</h4>
-        {% if form.non_field_errors %}
-        <small class="text-danger">
-            {{ form.non_field_errors.as_ul }}
-        </small>
+        
+        <!-- Display Django messages (success/error) -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
         {% endif %}
+
+        <!-- Display form errors -->
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+            {{ form.non_field_errors.as_ul }}
+        </div>
+        {% endif %}
+
         <form method="post" action="{% url 'login' %}">
             {% csrf_token %}
             <div class="mb-3">
@@ -35,19 +48,18 @@
                 </div>
             </div>
 
-                <div class="mb-3">
-                    <a href="#" class="text-decoration-none">Forgot password?</a>
-                </div>
+            <div class="mb-3">
+                <a href="#" class="text-decoration-none">Forgot password?</a>
+            </div>
 
-
-            <button type="submit" class="btn btn-dark">
+            <button type="submit" class="btn btn-dark w-100">
                 Sign In
             </button>
 
-                <p class="text-center">
-                    Don’t have an account?
-                    <a href="{% url 'register' %}" class="text-decoration-none">Sign Up</a>
-                </p>
+            <p class="text-center mt-3">
+                Don't have an account?
+                <a href="{% url 'register' %}" class="text-decoration-none">Sign Up</a>
+            </p>
 
         </form>
 

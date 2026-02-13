@@ -1,6 +1,5 @@
-
 {% extends "base.html" %}
-{%block title%} Register - IBANK {%endblock%}
+{% block title %} Register - IBANK {% endblock %}
 
 
 {% block content %}
@@ -10,35 +9,59 @@
 
     <h4 class="text-center mb-4 fw-bold">Create New Account</h4>
 
+    <!-- Display error messages if any -->
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+
     <form method="post" action="{% url 'register' %}">
         {% csrf_token %}
 
       <div class="mb-3">
         <input type="text" name="username" class="form-control" placeholder="Username" required>
+        <small class="text-muted">Choose a unique username</small>
       </div>
 
       <div class="mb-3">
-    <input type="password" name="password1" class="form-control" placeholder="Password" required>
-  <div class="col-4">
-    <small class="text-muted">
-      Must be 8–20 characters
-    </small>
-  </div>
-          
- </div>
+        <input type="email" name="email" class="form-control" placeholder="Email Address" required>
+        <small class="text-muted">We'll never share your email</small>
+      </div>
 
       <div class="mb-3">
-       
-    <input type="password" name="password2" class="form-control" placeholder="Confirm Password" required>
-  <div class="col-4">
-    <small class="text-muted">
-      Must be 8–20 characters
-    </small>
-  </div>
+        <input type="text" name="first_name" class="form-control" placeholder="First Name" required>
+      </div>
+
+      <div class="mb-3">
+        <input type="text" name="last_name" class="form-control" placeholder="Last Name" required>
+      </div>
+
+      <div class="mb-3">
+        <input type="tel" name="phone" class="form-control" placeholder="Phone Number" required>
+        <small class="text-muted">Format: 98XXXXXXXXX</small>
+      </div>
+
+      <div class="mb-3">
+        <textarea name="address" class="form-control" rows="2" placeholder="Full Address" required></textarea>
+        <small class="text-muted">Include city and postal code</small>
+      </div>
+
+      <div class="mb-3">
+        <input type="password" name="password1" class="form-control" placeholder="Password" required>
+        <small class="text-muted">Must be 8–20 characters long</small>
+      </div>
+
+      <div class="mb-3">
+        <input type="password" name="password2" class="form-control" placeholder="Confirm Password" required>
+        <small class="text-muted">Enter the same password again</small>
       </div>
 
       <div class="form-check mb-4">
-        <input class="form-check-input" type="checkbox" id="terms">
+        <input class="form-check-input" type="checkbox" id="terms" required>
         <label class="form-check-label" for="terms">
           I agree to terms and conditions
         </label>

@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+{% block title %}Send Money - IBANK{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-4">
+    
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="fw-bold">Send Money</h2>
+            <p class="text-muted">Transfer money to other accounts quickly and securely</p>
+        </div>
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row">
+        <!-- Transfer Form (Left Column) -->
+        <div class="col-lg-7">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-send me-2"></i>Transfer Money
+                    </h5>
+                </div>
+
+                <div class="card-body">
+                    <form method="POST" action="{% url 'send money' %}" id="transferForm">
+                        {% csrf_token %}
+
+                        <!-- From Account -->
+                        <div class="mb-4">
+                            <label for="fromAccount" class="form-label fw-semibold">From Account</label>
+                            <select class="form-select" name="from_account" id="fromAccount" required>
+                                <option value="">Select source account...</option>
+                                {% for account in my_accounts %}
+                                <option value="{{ account.id }}" data-balance="{{ account.balance }}">
+                                    Account #{{ account.id }} - {{ account.account_type|title }} (Balance: ${{ account.balance }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">Choose which account to send money from</small>
+                        </div>
+
+                        <!-- Available Balance Display -->
+                        <div class="alert alert-info d-none" id="balanceAlert">
+                            <small>
+                                <strong>Available Balance:</strong> $<span id="availableBalance">0.00</span>
+                            </small>
+                        </div>
+
+                        <!-- To Account -->
+                        <div class="mb-4">
+                            <label for="toAccount" class="form-label fw-semibold">To Account Number</label>
+                            <input type="number" class="form-control" name="to_account" id="toAccount" 
+                                   required placeholder="Enter recipient account number">
+                            <small class="text-muted">Enter the account number you want to send money to</small>
+                        </div>
+
+                        <!-- Amount -->
+                        <div class="mb-4">
+                            <label for="amount" class="form-label fw-semibold">Amount</label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" name="amount" id="amount" 
+                                       step="0.01" min="1" required placeholder="0.00">
+                            </div>
+                            <small class="text-muted">Enter the amount to transfer</small>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-4">
+                            <label for="description" class="form-label fw-semibold">Description (Optional)</label>
+                            <input type="text" class="form-control" name="description" id="description" 
+                                   placeholder="e.g., Payment for services, Gift, etc.">
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-send-check me-2"></i>Transfer Money
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Security Notice -->
+            <div class="alert alert-warning mt-3">
+                <i class="bi bi-shield-exclamation me-2"></i>
+                <strong>Security Notice:</strong> Always verify the recipient account number before transferring money. Transactions cannot be reversed.
+            </div>
+        </div>
+
+        <!-- Quick Actions & Info (Right Column) -->
+        <div class="col-lg-5 mt-4 mt-lg-0">
+            
+            <!-- My Accounts Summary -->
+            <div class="card shadow-sm mb-3">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="bi bi-wallet2 me-2"></i>My Accounts
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if my_accounts %}
+                        <div class="list-group list-group-flush">
+                            {% for account in my_accounts %}
+                            <div class="list-group-item px-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">Account #{{ account.id }}</h6>
+                                        <small class="text-muted">{{ account.account_type|title }}</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <h6 class="mb-0 text-success">${{ account.balance }}</h6>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">No accounts available. Please create an account first.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Transfer Tips -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="bi bi-lightbulb me-2"></i>Transfer Tips
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0 ps-3">
+                        <li class="mb-2">
+                            <small>Double-check the recipient account number</small>
+                        </li>
+                        <li class="mb-2">
+                            <small>Ensure you have sufficient balance</small>
+                        </li>
+                        <li class="mb-2">
+                            <small>Add a description to track your transfers</small>
+                        </li>
+                        <li class="mb-0">
+                            <small>Transfers are instant and cannot be reversed</small>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Recent Transfers (Optional) -->
+            <div class="card shadow-sm mt-3">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="bi bi-clock-history me-2"></i>Need Help?
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">
+                        <small><strong>Transfer Limits:</strong> No daily limit</small>
+                    </p>
+                    <p class="mb-2">
+                        <small><strong>Processing Time:</strong> Instant</small>
+                    </p>
+                    <p class="mb-0">
+                        <small><strong>Fees:</strong> No transfer fees</small>
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<!-- JavaScript for dynamic balance display -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fromAccountSelect = document.getElementById('fromAccount');
+    const balanceAlert = document.getElementById('balanceAlert');
+    const availableBalanceSpan = document.getElementById('availableBalance');
+    const amountInput = document.getElementById('amount');
+
+    // Show available balance when account is selected
+    fromAccountSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const balance = selectedOption.getAttribute('data-balance');
+        
+        if (balance) {
+            availableBalanceSpan.textContent = parseFloat(balance).toFixed(2);
+            balanceAlert.classList.remove('d-none');
+            amountInput.max = balance; // Set max amount
+        } else {
+            balanceAlert.classList.add('d-none');
+            amountInput.removeAttribute('max');
+        }
+    });
+
+    // Form validation before submit
+    document.getElementById('transferForm').addEventListener('submit', function(e) {
+        const selectedOption = fromAccountSelect.options[fromAccountSelect.selectedIndex];
+        const balance = parseFloat(selectedOption.getAttribute('data-balance'));
+        const amount = parseFloat(amountInput.value);
+
+        if (amount > balance) {
+            e.preventDefault();
+            alert('Insufficient balance! Available: $' + balance.toFixed(2));
+            return false;
+        }
+
+        // Confirm transfer
+        const toAccount = document.getElementById('toAccount').value;
+        const confirmMsg = `Are you sure you want to transfer $${amount.toFixed(2)} to Account #${toAccount}?`;
+        
+        if (!confirm(confirmMsg)) {
+            e.preventDefault();
+            return false;
+        }
+    });
+});
+</script>
+
+{% endblock %}
