@@ -1,3 +1,4 @@
+import re 
 from django.shortcuts import redirect, render
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login, authenticate, logout
@@ -6,10 +7,9 @@ from django.contrib import messages
 from django.db import connection
 from decimal import Decimal
 from datetime import datetime
+from django.contrib.auth.models import User
+from django.db import transaction
 
-# ============================================
-# HELPER FUNCTIONS FOR DATABASE OPERATIONS
-# ============================================
 
 def execute_query(query, params=None):
     """Execute a query and return results for SELECT statements"""
@@ -47,9 +47,7 @@ def execute_single(query, params=None):
     finally:
         cursor.close()
 
-# ============================================
-# AUTHENTICATION VIEWS
-# ============================================
+
 
 def base_view(request):
     return render(request, 'base.html')
@@ -71,53 +69,71 @@ def register_view(request):
         address = request.POST.get('address')
         
         # Validation
+
+        errors = []
+        #Username can contain letters, numbers and @/./+/-/_ characters
+        if not re.match(r'^[\w.@+-_]+$', username):
+            errors.append('Username contains invalid characters!')
+        
+        #Mail should be in valid format
+        if not re.match(r'^[^@]+@[^@]+\.[^@]+$', email):
+            errors.append('Invalid email format!')
+
+        if len(password1) < 8:
+            errors.append('Password must be at least 8 characters!')
+
+        if not re.search(r'[A-Z]', password1):
+            errors.append('Password must contain at least one uppercase letter!')
+
+        if not re.search(r'[0-9]', password1):
+            errors.append('Password must contain at least one digit!')
+
         if password1 != password2:
-            messages.error(request, 'Passwords do not match!')
+            errors.append('Passwords do not match!')
+
+        if errors:
+            for error in errors:
+                messages.error(request, error)
             return render(request, 'register.html')
         
-        if len(password1) < 8:
-            messages.error(request, 'Password must be at least 8 characters long!')
-            return render(request, 'register.html')
         
         # Check if username already exists
-        cursor = connection.cursor()
-        cursor.execute("SELECT id FROM auth_user WHERE username = %s", [username])
-        if cursor.fetchone():
-            cursor.close()
-            messages.error(request, 'Username already exists!')
-            return render(request, 'register.html')
+        # with block auto closes the cursor after execution, ensuring proper resource management
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT id FROM auth_user WHERE username = %s", [username])
+            if cursor.fetchone():
+                messages.error(request, 'Username already exists!')
+                return render(request, 'register.html')
         
         # Check if email already exists
-        cursor.execute("SELECT id FROM auth_user WHERE email = %s", [email])
-        if cursor.fetchone():
-            cursor.close()
-            messages.error(request, 'Email already registered!')
-            return render(request, 'register.html')
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT id FROM auth_user WHERE email = %s", [email])
+            if cursor.fetchone():
+                messages.error(request, 'Email already registered!')
+                return render(request, 'register.html')
         
-        cursor.close()
         
         # Create user using Django's UserCreationForm for password hashing
-        from django.contrib.auth.models import User
+        
         try:
-            user = User.objects.create_user(
-                username=username,
-                email=email,
-                password=password1,
-                first_name=first_name,
-                last_name=last_name
-            )
-            
-            # Create customer record using raw SQL
-            query = """
-                INSERT INTO customer (user_id, phone, address)
-                VALUES (%s, %s, %s)
-            """
-            execute_query(query, [user.id, phone, address])
-            
-            # Log the user in
-            login(request, user)
-            messages.success(request, 'Registration successful! Welcome to IBANK!')
-            return redirect('dashboard')
+            with transaction.atomic():
+                #create django user( for password hashing and authentication)
+                user = User.objects.create_user(
+                    username=username,
+                    email=email,
+                    password=password1,
+                    first_name=first_name,
+                    last_name=last_name
+                )
+                
+                # Create customer record using raw SQL
+                with connection.cursor() as cursor:
+                    cursor.execute("""INSERT INTO customer (user_id, phone, address) VALUES (%s, %s, %s)""", [user.id, phone, address])
+                
+                # Log the user in
+                login(request, user)
+                messages.success(request, 'Registration successful! Welcome to IBANK!')
+                return redirect('dashboard')
             
         except Exception as e:
             messages.error(request, f'Error during registration: {str(e)}')
@@ -213,9 +229,8 @@ def dashboard(request):
     
     return render(request, 'dashboard.html', context)
 
-# ============================================
-# ACCOUNTS MANAGEMENT
-# ============================================
+
+
 
 @login_required
 def accounts(request):
