@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import connection
 from decimal import Decimal, InvalidOperation
-from datetime import datetime
+from datetime import date, datetime
 from django.contrib.auth.models import User
 from django.db import transaction
 
@@ -568,11 +568,41 @@ def transactions(request):
     # Get customer ID
     customer_query = "SELECT id FROM customer WHERE user_id = %s"
     customer = execute_single(customer_query, [user_id])
+
+    # If customer profile is not found, log out the user and redirect to login page
+    if not customer:
+        messages.error(request, 'Customer profile not found!')
+        return redirect('login')
+
     customer_id = customer['id']
     
-    # Get filter parameters
-    account_filter = request.GET.get('account', '')
-    transaction_type = request.GET.get('type', '')
+    # Validate and get filter parameters
+    
+    account_filter = request.GET.get('account', '').strip()
+    transaction_type = request.GET.get('type', '').strip()
+    date_from = request.GET.get('from_date').strip()
+    date_to = request.GET.get('to_date').strip()
+    VALID_TRANSACTION_TYPES = ['deposit', 'withdraw', 'transfer']
+
+    if transaction_type and transaction_type not in VALID_TRANSACTION_TYPES:
+        messages.error(request, 'Invalid transaction type filter!')
+        return redirect('transactions')
+    
+    if account_filter:
+        try:
+            account_filter = int(account_filter)
+        except ValueError:
+            messages.error(request, 'Invalid account filter!')
+            return redirect('transactions')
+        
+    # Add pagination for large transaction history
+    try:
+        page = max(1, int(request.GET.get('page', 1)))
+    except ValueError:
+        page = 1
+    limit = 20
+    offset = (page - 1) * limit
+
     
     # Base query
     query = """
@@ -580,7 +610,7 @@ def transactions(request):
                a.id as account_id, a.account_type, a.balance
         FROM transaction t
         INNER JOIN account a ON t.account_id = a.id
-        WHERE a.customer_id = %s
+        WHERE a.customer_id = %s AND a.is_active = TRUE
     """
     params = [customer_id]
     
@@ -592,24 +622,42 @@ def transactions(request):
     if transaction_type:
         query += " AND t.transaction_type = %s"
         params.append(transaction_type)
+
+    #add date range filter
     
-    query += " ORDER BY t.timestamp DESC LIMIT 50"
+    if date_from:
+        query += " AND t.timestamp >= %s"
+        params.append(date_from)
+
+    if date_to:
+        query += " AND t.timestamp <= %s"
+        params.append(date_to)
+
+    # Order by most recent and add pagination
+    query += f" ORDER BY t.timestamp DESC LIMIT %s OFFSET %s"
+    params.extend([limit, offset])  
     
     transactions_list = execute_query(query, params)
+
     
     # Get accounts for filter dropdown
     accounts_query = """
         SELECT id, account_type, balance 
         FROM account 
-        WHERE customer_id = %s
+        WHERE customer_id = %s AND is_active = TRUE
     """
     accounts_list = execute_query(accounts_query, [customer_id])
     
     context = {
         'transactions': transactions_list,
         'accounts': accounts_list,
-        'selected_account': account_filter,
+        'selected_account': str(account_filter),
         'selected_type': transaction_type,
+        'from_date': date_from,
+        'to_date': date_to,
+        'page': page,
+        'has_next': len(transactions_list) == limit,  # Simple check for next page
+        'has_previous': page > 1,
     }
     
     return render(request, 'transactions.html', context)
