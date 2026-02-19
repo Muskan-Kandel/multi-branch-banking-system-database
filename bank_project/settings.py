@@ -74,17 +74,28 @@ WSGI_APPLICATION = 'bank_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
+import os
 import dj_database_url
-DATABASES = {
-    'default': dj_database_url.parse('postgresql://default:bPdRk1CD3zKvWZso3x3nXAHFgktqZV6Q@dpg-d6bhvo6mcj7s73aj94v0-a.singapore-postgres.render.com/db_database_jfrf') {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'db_database',
-        'USER': 'postgres',
-        'PASSWORD': 'abhishek',
-        'HOST': 'localhost',
-        'PORT': '5432',
+
+if os.getenv('postgresql://default:bPdRk1CD3zKvWZso3x3nXAHFgktqZV6Q@dpg-d6bhvo6mcj7s73aj94v0-a.singapore-postgres.render.com/db_database_jfrf'):
+    DATABASES = {
+        'default': dj_database_url.parse(
+            os.getenv('postgresql://default:bPdRk1CD3zKvWZso3x3nXAHFgktqZV6Q@dpg-d6bhvo6mcj7s73aj94v0-a.singapore-postgres.render.com/db_database_jfrf'),
+            conn_max_age=600,
+            ssl_require=True
+        )
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'db_database',
+            'USER': 'postgres',
+            'PASSWORD': 'abhishek',
+            'HOST': 'localhost',
+            'PORT': '5432',
+        }
+    }
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
