@@ -78,13 +78,9 @@ WSGI_APPLICATION = 'bank_project.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'multibranch banking system ',
+        'NAME': 'db_database',
         'USER': 'postgres',
-<<<<<<< HEAD
-        'PASSWORD': '3652',
-=======
         'PASSWORD': 'muskan',
->>>>>>> muskan-branch
         'HOST': 'localhost',
         'PORT': '5432',
     }

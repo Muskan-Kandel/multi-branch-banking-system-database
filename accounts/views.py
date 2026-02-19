@@ -5,19 +5,10 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import connection
-<<<<<<< HEAD
-from decimal import Decimal
-from datetime import datetime
-from django.contrib.auth import logout
-from django.contrib import messages
-from django.shortcuts import redirect
-
-=======
 from decimal import Decimal, InvalidOperation
 from datetime import date, datetime
 from django.contrib.auth.models import User
 from django.db import transaction
->>>>>>> muskan-branch
 
 
 def execute_query(query, params=None):
