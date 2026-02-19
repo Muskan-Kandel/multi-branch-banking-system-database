@@ -774,9 +774,17 @@ def profile_and_settings(request):
         
         # UPDATE PROFILE
         if action == 'update_profile':
-            phone = request.POST.get('phone')
-            address = request.POST.get('address')
-            
+            phone = request.POST.get('phone','').strip()
+            address = request.POST.get('address','').strip()
+
+        if not phone and not address:
+            messages.error(request, 'Please provide at least one field to update!')
+            return redirect('profile_and_settings')
+        
+        if len(phone) > 15:
+            messages.error(request, 'Invalid phone number!')
+            return redirect('profile_and_settings')
+        
             query = """
                 UPDATE customer 
                 SET phone = %s, address = %s
@@ -824,7 +832,7 @@ def profile_and_settings(request):
     context = {
         'customer': customer,
         'stats': stats,
-        'transaction_count': transaction_stats['transaction_count'],
+        'transaction_count': transaction_stats['transaction_count'] if transaction_stats else 0,
     }
     
     return render(request, 'profile and settings.html', context)
