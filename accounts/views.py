@@ -638,8 +638,7 @@ def transactions(request):
     params.extend([limit, offset])  
     
     transactions_list = execute_query(query, params)
-
-    
+   
     # Get accounts for filter dropdown
     accounts_query = """
         SELECT id, account_type, balance 
@@ -673,6 +672,10 @@ def beneficiaries(request):
     # Get customer ID
     customer_query = "SELECT id FROM customer WHERE user_id = %s"
     customer = execute_single(customer_query, [user_id])
+
+    if not customer:
+        messages.error(request, 'Customer profile not found!')
+        return redirect('login')
     customer_id = customer['id']
     
     if request.method == 'POST':
@@ -680,11 +683,35 @@ def beneficiaries(request):
         
         # ADD BENEFICIARY
         if action == 'add':
-            name = request.POST.get('name')
-            account_number = request.POST.get('account_number')
-            bank_name = request.POST.get('bank_name')
-            ifsc_code = request.POST.get('ifsc_code')
+            name = request.POST.get('name').strip()
+            account_number = request.POST.get('account_number').strip()
+            bank_name = request.POST.get('bank_name').strip()
+            ifsc_code = request.POST.get('ifsc_code').strip().upper()
+
+            if not all([name, account_number, bank_name, ifsc_code]):
+                messages.error(request, 'All beneficiary fields are required!')
+                return redirect('beneficiaries')
             
+            if len(name) > 100:
+                messages.error(request, 'Beneficiary name cannot exceed 100 characters!')
+                return redirect('beneficiaries')
+            
+            #no need of ifsc code validation as we are not integrating with any external system, just checking length for basic validation
+            if len(ifsc_code) != 11:
+                messages.error(request, 'IFSC code must be exactly 11 characters!')
+                return redirect('beneficiaries')
+            
+            #check if beneficiary with same account number already exists for this customer
+            existing_query = """
+                SELECT id FROM beneficiary 
+                WHERE customer_id = %s AND account_number = %s
+            """
+            existing_beneficiary = execute_single(existing_query, [customer_id, account_number])
+            if existing_beneficiary:
+                messages.error(request, f'Beneficiary with account number {account_number} already exists!')
+                return redirect('beneficiaries')
+
+            #insert new beneficiary
             query = """
                 INSERT INTO beneficiary (customer_id, name, account_number, bank_name, ifsc_code)
                 VALUES (%s, %s, %s, %s, %s)
@@ -698,13 +725,24 @@ def beneficiaries(request):
         # DELETE BENEFICIARY
         elif action == 'delete':
             beneficiary_id = request.POST.get('beneficiary_id')
-            
-            query = "DELETE FROM beneficiary WHERE id = %s AND customer_id = %s"
+            # Validating beneficiary ID
             try:
-                execute_query(query, [beneficiary_id, customer_id])
-                messages.success(request, 'Beneficiary deleted successfully!')
+                beneficiary_id = int(beneficiary_id)
+            except (ValueError, TypeError):
+                messages.error(request, 'Invalid beneficiary ID!')
+                return redirect('beneficiaries')
+            
+            #Delete beneficiary 
+            try:
+                with connection.cursor() as cursor:
+                    query = "DELETE FROM beneficiary WHERE id = %s AND customer_id = %s"
+                    cursor.execute(query, [beneficiary_id, customer_id])
+                    if cursor.rowcount == 0:
+                        messages.error(request, 'Beneficiary not found or already deleted!')
+                    else:
+                        messages.success(request, 'Beneficiary deleted successfully!')
             except Exception as e:
-                messages.error(request, f'Error deleting beneficiary: {str(e)}')
+                messages.error(request, f'Error deleting beneficiary: {str(e)}')  
         
         return redirect('beneficiaries')
     
