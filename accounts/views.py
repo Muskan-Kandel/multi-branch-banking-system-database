@@ -56,7 +56,9 @@ def IBANK(request):
     return render(request, 'IBANK.html')
 
 
-
+# ============================================
+#  REGISTER VIEW
+# ============================================
 def register_view(request):
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -65,7 +67,7 @@ def register_view(request):
         last_name = request.POST.get('last_name')
         password1 = request.POST.get('password1')
         password2 = request.POST.get('password2')
-        phone = request.POST.get('phone')
+        phone = request.POST.get('phone')                              
         address = request.POST.get('address')
         
         # Validation
@@ -141,21 +143,76 @@ def register_view(request):
     
     return render(request, 'register.html')  
 
+
+# ============================================
+# LOGIN VIEW
+# ============================================
 def login_view(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    
     if request.method == 'POST':
-        form = AuthenticationForm(request, data=request.POST)
-        if form.is_valid():
-            user = form.get_user()
-            login(request, user)
-            return redirect('dashboard')
-        else:
-            print(form.errors)
+        username = request.POST.get('username')
+
+        #check lockout status
+        with connection.cursor() as cursor:
+            cursor.execute("""
+            SELECT c.failed_attempts, c.locked_until
+            FROM customer c
+            JOIN auth_user u ON c.user_id = u.id
+            WHERE u.username = %s """, [username])
+            row = cursor.fetchone()
+        
+        if row:
+            failed_attempts, locked_until = row
+            if locked_until and locked_until > datetime.now():
+                messages.error(request, f'Account is locked until {locked_until.strftime("%Y-%m-%d %H:%M:%S")} due to multiple failed login attempts!')
+                return render(request, 'login.html')
+
+            form = AuthenticationForm(request, data=request.POST)
+            if form.is_valid():
+                user = form.get_user()
+                
+                # Reset failed attempts on successful login
+                with connection.cursor() as cursor:
+                    cursor.execute("""
+                    UPDATE customer 
+                    SET failed_attempts = 0, locked_until = NULL
+                    WHERE user_id = %s
+                    """, [user.id])
+                
+                login(request, user)
+                return redirect('dashboard')
+        
+            else:
+                with connection.cursor() as cursor:
+                    cursor.execute("""
+                    UPDATE customer 
+                    SET failed_attempts = failed_attempts + 1,
+                        locked_until = CASE 
+                            WHEN failed_attempts >= 4 THEN NOW() + INTERVAL '15 MINUTE'
+                            ELSE NULL
+                        END
+                    WHERE user_id = (
+                                   SELECT id FROM auth_user WHERE username = %s)
+                    """, [username])
+
+                    messages.error(request, 'Invalid username or password!')
+                    form = AuthenticationForm(request)
+
     else:
         form = AuthenticationForm()
+
     return render(request, 'login.html', {'form': form})   
+
+
+# ============================================
+# LOGOUT VIEW
+# ============================================
 
 def logout_view(request):
     logout(request)
+    messages.success(request, "You've been logged out.")
     return redirect('login')
 
 # ============================================
@@ -230,7 +287,9 @@ def dashboard(request):
     return render(request, 'dashboard.html', context)
 
 
-
+# ============================================
+# ACCOUNTS VIEW
+# ============================================
 
 @login_required
 def accounts(request):
