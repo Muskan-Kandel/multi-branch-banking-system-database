@@ -1,0 +1,31 @@
+[33mc2852bb[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Merge branch 'main' of https://github.com/Muskan-Kandel/Multi-Branch-Banking-System-DataBase
+[33m85a8879[m[33m ([m[1;31morigin/muskan-branch[m[33m, [m[1;32mmuskan-branch[m[33m)[m fix:handle missing data in transaction views
+[33m0592509[m fixed profile and settings: null check, input validation
+[33ma6c324a[m fix beneficiaries view: null check, input validation, rowcount check, length validation, duplicate check
+[33m5250901[m Fixed transaction views: null check, type validation, pagination, data range filter
+[33mae870be[m fix send money views: atomic transactions, input validation, TOCTOU race condition, inactive account check, self transfer guard
+[33mcf17e17[m fixed accounts view: null check error, atomic transactions
+[33mf92756d[m[33m ([m[1;31morigin/main[m[33m)[m Changes in templates
+[33m8b367fb[m added gitignore file
+[33mb34fef9[m implement login view with failed login tracking and account lockout
+[33m0279331[m refactored register_view: ensured resource management using context managers, implemented ACID atomicity via transaction.atomic and added regex-based input validation
+[33m247df1b[m pulled main branch
+[33m0d1e827[m recovery
+[33m931c1bd[m authorization updated
+[33me3d59ca[m[33m ([m[1;31morigin/sneha-branch[m[33m)[m Add .gitignore file
+[33mc0560f8[m Add gitignore to ignore pycache and database files
+[33m7412beb[m see changes
+[33md8f71e0[m CHANGES IN VIEWS, HTML ETC
+[33m0222566[m Changes done one backend and frontend implementation
+[33md0fb11a[m templates updates
+[33mb6d7e30[m the login and registration page that was in the main branch has been added with the django and it is almost ready for the first project submission as only the middleware and route protection remains. dashboard and profile is left to do and i'll do it once provided with the file or the program to do it
+[33mb51a252[m updated files
+[33m8943581[m Merge branch 'backend' into muskan-branch
+[33m75feb4f[m some changes
+[33m87f5c33[m made files
+[33m23f5d42[m Backend changes created folder
+[33md0f96e3[m[33m ([m[1;31morigin/abhishek_branch[m[33m)[m added python folders for inheritance
+[33m16fdb8b[m Merge remote-tracking branch 'origin/sneha-branch'
+[33m0ba2b18[m added new folders and updated base file
+[33mb97d316[m Added register.html and login.html in templates
+[33m8c557a3[m initial project skeleton

@@ -1,19 +1,24 @@
+import re 
 from django.shortcuts import redirect, render
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import connection
+<<<<<<< HEAD
 from decimal import Decimal
 from datetime import datetime
 from django.contrib.auth import logout
 from django.contrib import messages
 from django.shortcuts import redirect
 
+=======
+from decimal import Decimal, InvalidOperation
+from datetime import date, datetime
+from django.contrib.auth.models import User
+from django.db import transaction
+>>>>>>> muskan-branch
 
-# ============================================
-# HELPER FUNCTIONS FOR DATABASE OPERATIONS
-# ============================================
 
 def execute_query(query, params=None):
     """Execute a query and return results for SELECT statements"""
@@ -51,9 +56,7 @@ def execute_single(query, params=None):
     finally:
         cursor.close()
 
-# ============================================
-# AUTHENTICATION VIEWS
-# ============================================
+
 
 def base_view(request):
     return render(request, 'base.html')
@@ -62,7 +65,9 @@ def IBANK(request):
     return render(request, 'IBANK.html')
 
 
-
+# ============================================
+#  REGISTER VIEW
+# ============================================
 def register_view(request):
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -71,57 +76,75 @@ def register_view(request):
         last_name = request.POST.get('last_name')
         password1 = request.POST.get('password1')
         password2 = request.POST.get('password2')
-        phone = request.POST.get('phone')
+        phone = request.POST.get('phone')                              
         address = request.POST.get('address')
         
         # Validation
+
+        errors = []
+        #Username can contain letters, numbers and @/./+/-/_ characters
+        if not re.match(r'^[\w.@+-_]+$', username):
+            errors.append('Username contains invalid characters!')
+        
+        #Mail should be in valid format
+        if not re.match(r'^[^@]+@[^@]+\.[^@]+$', email):
+            errors.append('Invalid email format!')
+
+        if len(password1) < 8:
+            errors.append('Password must be at least 8 characters!')
+
+        if not re.search(r'[A-Z]', password1):
+            errors.append('Password must contain at least one uppercase letter!')
+
+        if not re.search(r'[0-9]', password1):
+            errors.append('Password must contain at least one digit!')
+
         if password1 != password2:
-            messages.error(request, 'Passwords do not match!')
+            errors.append('Passwords do not match!')
+
+        if errors:
+            for error in errors:
+                messages.error(request, error)
             return render(request, 'register.html')
         
-        if len(password1) < 8:
-            messages.error(request, 'Password must be at least 8 characters long!')
-            return render(request, 'register.html')
         
         # Check if username already exists
-        cursor = connection.cursor()
-        cursor.execute("SELECT id FROM auth_user WHERE username = %s", [username])
-        if cursor.fetchone():
-            cursor.close()
-            messages.error(request, 'Username already exists!')
-            return render(request, 'register.html')
+        # with block auto closes the cursor after execution, ensuring proper resource management
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT id FROM auth_user WHERE username = %s", [username])
+            if cursor.fetchone():
+                messages.error(request, 'Username already exists!')
+                return render(request, 'register.html')
         
         # Check if email already exists
-        cursor.execute("SELECT id FROM auth_user WHERE email = %s", [email])
-        if cursor.fetchone():
-            cursor.close()
-            messages.error(request, 'Email already registered!')
-            return render(request, 'register.html')
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT id FROM auth_user WHERE email = %s", [email])
+            if cursor.fetchone():
+                messages.error(request, 'Email already registered!')
+                return render(request, 'register.html')
         
-        cursor.close()
         
         # Create user using Django's UserCreationForm for password hashing
-        from django.contrib.auth.models import User
+        
         try:
-            user = User.objects.create_user(
-                username=username,
-                email=email,
-                password=password1,
-                first_name=first_name,
-                last_name=last_name
-            )
-            
-            # Create customer record using raw SQL
-            query = """
-                INSERT INTO customer (user_id, phone, address)
-                VALUES (%s, %s, %s)
-            """
-            execute_query(query, [user.id, phone, address])
-            
-            # Log the user in
-            login(request, user)
-            messages.success(request, 'Registration successful! Welcome to IBANK!')
-            return redirect('dashboard')
+            with transaction.atomic():
+                #create django user( for password hashing and authentication)
+                user = User.objects.create_user(
+                    username=username,
+                    email=email,
+                    password=password1,
+                    first_name=first_name,
+                    last_name=last_name
+                )
+                
+                # Create customer record using raw SQL
+                with connection.cursor() as cursor:
+                    cursor.execute("""INSERT INTO customer (user_id, phone, address) VALUES (%s, %s, %s)""", [user.id, phone, address])
+                
+                # Log the user in
+                login(request, user)
+                messages.success(request, 'Registration successful! Welcome to IBANK!')
+                return redirect('dashboard')
             
         except Exception as e:
             messages.error(request, f'Error during registration: {str(e)}')
@@ -129,21 +152,76 @@ def register_view(request):
     
     return render(request, 'register.html')  
 
+
+# ============================================
+# LOGIN VIEW
+# ============================================
 def login_view(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    
     if request.method == 'POST':
-        form = AuthenticationForm(request, data=request.POST)
-        if form.is_valid():
-            user = form.get_user()
-            login(request, user)
-            return redirect('dashboard')
-        else:
-            print(form.errors)
+        username = request.POST.get('username')
+
+        #check lockout status
+        with connection.cursor() as cursor:
+            cursor.execute("""
+            SELECT c.failed_attempts, c.locked_until
+            FROM customer c
+            JOIN auth_user u ON c.user_id = u.id
+            WHERE u.username = %s """, [username])
+            row = cursor.fetchone()
+        
+        if row:
+            failed_attempts, locked_until = row
+            if locked_until and locked_until > datetime.now():
+                messages.error(request, f'Account is locked until {locked_until.strftime("%Y-%m-%d %H:%M:%S")} due to multiple failed login attempts!')
+                return render(request, 'login.html')
+
+            form = AuthenticationForm(request, data=request.POST)
+            if form.is_valid():
+                user = form.get_user()
+                
+                # Reset failed attempts on successful login
+                with connection.cursor() as cursor:
+                    cursor.execute("""
+                    UPDATE customer 
+                    SET failed_attempts = 0, locked_until = NULL
+                    WHERE user_id = %s
+                    """, [user.id])
+                
+                login(request, user)
+                return redirect('dashboard')
+        
+            else:
+                with connection.cursor() as cursor:
+                    cursor.execute("""
+                    UPDATE customer 
+                    SET failed_attempts = failed_attempts + 1,
+                        locked_until = CASE 
+                            WHEN failed_attempts >= 4 THEN NOW() + INTERVAL '15 MINUTE'
+                            ELSE NULL
+                        END
+                    WHERE user_id = (
+                                   SELECT id FROM auth_user WHERE username = %s)
+                    """, [username])
+
+                    messages.error(request, 'Invalid username or password!')
+                    form = AuthenticationForm(request)
+
     else:
         form = AuthenticationForm()
+
     return render(request, 'login.html', {'form': form})   
+
+
+# ============================================
+# LOGOUT VIEW
+# ============================================
 
 def logout_view(request):
     logout(request)
+    messages.success(request, "You've been logged out.")
     return redirect('login')
 
 # ============================================
@@ -217,8 +295,9 @@ def dashboard(request):
     
     return render(request, 'dashboard.html', context)
 
+
 # ============================================
-# ACCOUNTS MANAGEMENT
+# ACCOUNTS VIEW
 # ============================================
 
 @login_required
@@ -228,6 +307,10 @@ def accounts(request):
     # Get customer ID
     customer_query = "SELECT id FROM customer WHERE user_id = %s"
     customer = execute_single(customer_query, [user_id])
+    
+    if not customer:
+        messages.error(request, 'Customer profile not found!')
+        return redirect('login')
     customer_id = customer['id']
     
     if request.method == 'POST':
@@ -238,6 +321,19 @@ def accounts(request):
             account_type = request.POST.get('account_type')
             branch_id = request.POST.get('branch_id')
             initial_balance = request.POST.get('initial_balance', 0)
+
+            # Validate account type and initial balance
+            VALID_ACCOUNT_TYPES = ['savings', 'current']
+            if account_type not in VALID_ACCOUNT_TYPES:
+                messages.error(request, 'Invalid account type selected!')
+                return redirect('accounts')
+            try:
+                initial_balance = Decimal(initial_balance)
+                if initial_balance < 0:
+                    raise ValueError('Initial balance cannot be negative!')
+            except (ValueError, InvalidOperation):
+                messages.error(request, 'Invalid initial balance format.')
+                return redirect('accounts')
             
             query = """
                 INSERT INTO account (customer_id, branch_id, account_type, balance, created_at, updated_at)
@@ -254,8 +350,17 @@ def accounts(request):
         # DEPOSIT MONEY
         elif action == 'deposit':
             account_id = request.POST.get('account_id')
-            amount = Decimal(request.POST.get('amount'))
+            amount = request.POST.get('amount')
             description = request.POST.get('description', 'Deposit')
+
+            # Validate amount
+            try:
+                amount = Decimal(amount)
+                if amount <= 0:
+                    raise ValueError('Deposit amount must be positive!')
+            except (ValueError, InvalidOperation) as e:
+                messages.error(request, f'Invalid deposit amount: {str(e)}')
+                return redirect('accounts')
             
             try:
                 # Update account balance
@@ -264,16 +369,18 @@ def accounts(request):
                     SET balance = balance + %s, updated_at = CURRENT_TIMESTAMP
                     WHERE id = %s AND customer_id = %s
                 """
-                execute_query(update_query, [amount, account_id, customer_id])
-                
+                 
                 # Record transaction
                 transaction_query = """
                     INSERT INTO transaction (account_id, transaction_type, amount, timestamp, description)
                     VALUES (%s, 'deposit', %s, CURRENT_TIMESTAMP, %s)
                 """
-                execute_query(transaction_query, [account_id, amount, description])
-                
+                with transaction.atomic():
+                    with connection.cursor() as cursor:
+                        cursor.execute(update_query, [amount, account_id, customer_id])
+                        cursor.execute(transaction_query, [account_id, amount, description])
                 messages.success(request, f'Successfully deposited ${amount}!')
+
             except Exception as e:
                 messages.error(request, f'Deposit failed: {str(e)}')
             
@@ -284,6 +391,15 @@ def accounts(request):
             account_id = request.POST.get('account_id')
             amount = Decimal(request.POST.get('amount'))
             description = request.POST.get('description', 'Withdrawal')
+
+            # Validate withdrawal amount
+            try:
+                amount = Decimal(amount)
+                if amount <= 0:
+                    raise ValueError('Withdrawal amount must be positive!')
+            except (ValueError, InvalidOperation) as e:
+                messages.error(request, f'Invalid withdrawal amount: {str(e)}')
+                return redirect('accounts')
             
             try:
                 # Check balance
@@ -298,18 +414,21 @@ def accounts(request):
                 update_query = """
                     UPDATE account 
                     SET balance = balance - %s, updated_at = CURRENT_TIMESTAMP
-                    WHERE id = %s AND customer_id = %s
+                    WHERE id = %s AND customer_id = %s AND balance >= %s
                 """
-                execute_query(update_query, [amount, account_id, customer_id])
+                
                 
                 # Record transaction
                 transaction_query = """
                     INSERT INTO transaction (account_id, transaction_type, amount, timestamp, description)
                     VALUES (%s, 'withdraw', %s, CURRENT_TIMESTAMP, %s)
                 """
-                execute_query(transaction_query, [account_id, amount, description])
-                
+                with transaction.atomic():
+                    with connection.cursor() as cursor:
+                        cursor.execute(update_query, [amount, account_id, customer_id, amount])
+                        cursor.execute(transaction_query, [account_id, amount, description])
                 messages.success(request, f'Successfully withdrawn ${amount}!')
+            
             except Exception as e:
                 messages.error(request, f'Withdrawal failed: {str(e)}')
             
@@ -348,80 +467,90 @@ def send_money(request):
     # Get customer ID
     customer_query = "SELECT id FROM customer WHERE user_id = %s"
     customer = execute_single(customer_query, [user_id])
+
+    # If customer profile is not found, log out the user and redirect to login page
+    if not customer:
+        messages.error(request, 'Customer profile not found!')
+        return redirect('login')
     customer_id = customer['id']
     
     if request.method == 'POST':
         from_account_id = request.POST.get('from_account')
         to_account_number = request.POST.get('to_account')
-        amount = Decimal(request.POST.get('amount'))
+        amount = (request.POST.get('amount'))
         description = request.POST.get('description', 'Transfer')
         
+        # Validate transfer amount
         try:
-            cursor = connection.cursor()
-            
-            # Check sender's balance
-            cursor.execute("""
-                SELECT balance FROM account 
-                WHERE id = %s AND customer_id = %s
-            """, [from_account_id, customer_id])
-            
-            sender_account = cursor.fetchone()
-            if not sender_account:
-                messages.error(request, 'Invalid account!')
-                return redirect('send_money')
-            
-            if Decimal(sender_account[0]) < amount:
-                messages.error(request, 'Insufficient balance!')
-                return redirect('send_money')
-            
-            # Find recipient account by account number (using account ID as account number for simplicity)
-            cursor.execute("""
-                SELECT id, customer_id FROM account WHERE id = %s
-            """, [to_account_number])
-            
-            recipient = cursor.fetchone()
-            if not recipient:
-                messages.error(request, 'Recipient account not found!')
-                return redirect('send_money')
-            
-            to_account_id = recipient[0]
-            
-            # Deduct from sender
-            cursor.execute("""
-                UPDATE account 
-                SET balance = balance - %s, updated_at = CURRENT_TIMESTAMP
-                WHERE id = %s
-            """, [amount, from_account_id])
-            
-            # Add to recipient
-            cursor.execute("""
-                UPDATE account 
-                SET balance = balance + %s, updated_at = CURRENT_TIMESTAMP
-                WHERE id = %s
-            """, [amount, to_account_id])
-            
-            # Record sender's transaction
-            cursor.execute("""
-                INSERT INTO transaction (account_id, transaction_type, amount, timestamp, description)
-                VALUES (%s, 'transfer', %s, CURRENT_TIMESTAMP, %s)
-            """, [from_account_id, amount, f'Transfer to Account #{to_account_id}: {description}'])
-            
-            # Record recipient's transaction
-            cursor.execute("""
-                INSERT INTO transaction (account_id, transaction_type, amount, timestamp, description)
-                VALUES (%s, 'deposit', %s, CURRENT_TIMESTAMP, %s)
-            """, [to_account_id, amount, f'Transfer from Account #{from_account_id}: {description}'])
-            
-            connection.commit()
-            cursor.close()
-            
-            messages.success(request, f'Successfully transferred ${amount}!')
+            amount = Decimal(amount)
+            if amount <= 0:
+                raise ValueError('Transfer amount must be positive!')
+        except (ValueError, InvalidOperation) as e:
+            messages.error(request, f'Invalid transfer amount: {str(e)}')
             return redirect('send_money')
+        
+        # Prevent transferring to the same account
+        if str(from_account_id) == str(to_account_number):
+            messages.error(request, 'Cannot transfer to the same account!')
+            return redirect('send_money')
+        
+        try:
+            with transaction.atomic():
+                 with connection.cursor() as cursor:
+                        
+                    # Find recipient account by account number (using account ID as account number for simplicity)
+                    cursor.execute("""
+                        SELECT id, customer_id FROM account 
+                        WHERE id = %s AND is_active = TRUE
+                    """, [to_account_number])
+                    
+                    recipient = cursor.fetchone()
+                    if not recipient:
+                        messages.error(request, 'Recipient account not found!')
+                        return redirect('send_money')
+                    
+                    to_account_id = recipient[0]
+                    
+                    # Deduct from sender(atomic balance check + deduction to prevent race conditions)
+                    cursor.execute("""
+                        UPDATE account 
+                        SET balance = balance - %s, updated_at = CURRENT_TIMESTAMP
+                        WHERE id = %s AND customer_id = %s AND balance >= %s AND is_active = TRUE
+                    """, [amount, from_account_id, customer_id, amount])
+                    
+                    if cursor.rowcount == 0:
+                        messages.error(request, 'Transfer failed due to insufficient balance or inactive account!')
+                        return redirect('send_money')
+                    
+                    # Add to recipient
+                    cursor.execute("""
+                        UPDATE account 
+                        SET balance = balance + %s, updated_at = CURRENT_TIMESTAMP
+                        WHERE id = %s AND is_active = TRUE
+                    """, [amount, to_account_id])
+
+                    if cursor.rowcount == 0:
+                        messages.error(request, 'Transfer failed: Recipient account not found or inactive!')
+                        return redirect('send_money')
+                    
+                    # Record sender's transaction
+                    cursor.execute("""
+                        INSERT INTO transaction (account_id, transaction_type, amount, timestamp, description)
+                        VALUES (%s, 'transfer', %s, CURRENT_TIMESTAMP, %s)
+                    """, [from_account_id, amount, f'Transfer to Account #{to_account_id}: {description}'])
+                    
+                    # Record recipient's transaction
+                    cursor.execute("""
+                        INSERT INTO transaction (account_id, transaction_type, amount, timestamp, description)
+                        VALUES (%s, 'deposit', %s, CURRENT_TIMESTAMP, %s)
+                    """, [to_account_id, amount, f'Transfer from Account #{from_account_id}: {description}'])
+                    
+                    messages.success(request, f'Successfully transferred ${amount}!')
+                    return redirect('send_money')
             
         except Exception as e:
-            connection.rollback()
             messages.error(request, f'Transfer failed: {str(e)}')
-            return redirect('send_money')
+        return redirect('send_money')
     
     # GET request
     accounts_query = """
@@ -448,11 +577,41 @@ def transactions(request):
     # Get customer ID
     customer_query = "SELECT id FROM customer WHERE user_id = %s"
     customer = execute_single(customer_query, [user_id])
+
+    # If customer profile is not found, log out the user and redirect to login page
+    if not customer:
+        messages.error(request, 'Customer profile not found!')
+        return redirect('login')
+
     customer_id = customer['id']
     
-    # Get filter parameters
-    account_filter = request.GET.get('account', '')
-    transaction_type = request.GET.get('type', '')
+    # Validate and get filter parameters
+    
+    account_filter = request.GET.get('account', '').strip()
+    transaction_type = request.GET.get('type', '').strip()
+    date_from = request.GET.get('from_date', '').strip()
+    date_to = request.GET.get('to_date', '').strip()
+    VALID_TRANSACTION_TYPES = ['deposit', 'withdraw', 'transfer']
+
+    if transaction_type and transaction_type not in VALID_TRANSACTION_TYPES:
+        messages.error(request, 'Invalid transaction type filter!')
+        return redirect('transactions')
+    
+    if account_filter:
+        try:
+            account_filter = int(account_filter)
+        except ValueError:
+            messages.error(request, 'Invalid account filter!')
+            return redirect('transactions')
+        
+    # Add pagination for large transaction history
+    try:
+        page = max(1, int(request.GET.get('page', 1)))
+    except ValueError:
+        page = 1
+    limit = 20
+    offset = (page - 1) * limit
+
     
     # Base query
     query = """
@@ -460,7 +619,7 @@ def transactions(request):
                a.id as account_id, a.account_type, a.balance
         FROM transaction t
         INNER JOIN account a ON t.account_id = a.id
-        WHERE a.customer_id = %s
+        WHERE a.customer_id = %s AND a.is_active = TRUE
     """
     params = [customer_id]
     
@@ -472,24 +631,41 @@ def transactions(request):
     if transaction_type:
         query += " AND t.transaction_type = %s"
         params.append(transaction_type)
+
+    #add date range filter
     
-    query += " ORDER BY t.timestamp DESC LIMIT 50"
+    if date_from:
+        query += " AND t.timestamp >= %s"
+        params.append(date_from)
+
+    if date_to:
+        query += " AND t.timestamp <= %s"
+        params.append(date_to)
+
+    # Order by most recent and add pagination
+    query += f" ORDER BY t.timestamp DESC LIMIT %s OFFSET %s"
+    params.extend([limit, offset])  
     
     transactions_list = execute_query(query, params)
-    
+   
     # Get accounts for filter dropdown
     accounts_query = """
         SELECT id, account_type, balance 
         FROM account 
-        WHERE customer_id = %s
+        WHERE customer_id = %s AND is_active = TRUE
     """
     accounts_list = execute_query(accounts_query, [customer_id])
     
     context = {
         'transactions': transactions_list,
         'accounts': accounts_list,
-        'selected_account': account_filter,
+        'selected_account': str(account_filter),
         'selected_type': transaction_type,
+        'from_date': date_from,
+        'to_date': date_to,
+        'page': page,
+        'has_next': len(transactions_list) == limit,  # Simple check for next page
+        'has_previous': page > 1,
     }
     
     return render(request, 'transactions.html', context)
@@ -505,6 +681,10 @@ def beneficiaries(request):
     # Get customer ID
     customer_query = "SELECT id FROM customer WHERE user_id = %s"
     customer = execute_single(customer_query, [user_id])
+
+    if not customer:
+        messages.error(request, 'Customer profile not found!')
+        return redirect('login')
     customer_id = customer['id']
     
     if request.method == 'POST':
@@ -512,11 +692,35 @@ def beneficiaries(request):
         
         # ADD BENEFICIARY
         if action == 'add':
-            name = request.POST.get('name')
-            account_number = request.POST.get('account_number')
-            bank_name = request.POST.get('bank_name')
-            ifsc_code = request.POST.get('ifsc_code')
+            name = request.POST.get('name').strip()
+            account_number = request.POST.get('account_number').strip()
+            bank_name = request.POST.get('bank_name').strip()
+            ifsc_code = request.POST.get('ifsc_code').strip().upper()
+
+            if not all([name, account_number, bank_name, ifsc_code]):
+                messages.error(request, 'All beneficiary fields are required!')
+                return redirect('beneficiaries')
             
+            if len(name) > 100:
+                messages.error(request, 'Beneficiary name cannot exceed 100 characters!')
+                return redirect('beneficiaries')
+            
+            #no need of ifsc code validation as we are not integrating with any external system, just checking length for basic validation
+            if len(ifsc_code) != 11:
+                messages.error(request, 'IFSC code must be exactly 11 characters!')
+                return redirect('beneficiaries')
+            
+            #check if beneficiary with same account number already exists for this customer
+            existing_query = """
+                SELECT id FROM beneficiary 
+                WHERE customer_id = %s AND account_number = %s
+            """
+            existing_beneficiary = execute_single(existing_query, [customer_id, account_number])
+            if existing_beneficiary:
+                messages.error(request, f'Beneficiary with account number {account_number} already exists!')
+                return redirect('beneficiaries')
+
+            #insert new beneficiary
             query = """
                 INSERT INTO beneficiary (customer_id, name, account_number, bank_name, ifsc_code)
                 VALUES (%s, %s, %s, %s, %s)
@@ -530,13 +734,24 @@ def beneficiaries(request):
         # DELETE BENEFICIARY
         elif action == 'delete':
             beneficiary_id = request.POST.get('beneficiary_id')
-            
-            query = "DELETE FROM beneficiary WHERE id = %s AND customer_id = %s"
+            # Validating beneficiary ID
             try:
-                execute_query(query, [beneficiary_id, customer_id])
-                messages.success(request, 'Beneficiary deleted successfully!')
+                beneficiary_id = int(beneficiary_id)
+            except (ValueError, TypeError):
+                messages.error(request, 'Invalid beneficiary ID!')
+                return redirect('beneficiaries')
+            
+            #Delete beneficiary 
+            try:
+                with connection.cursor() as cursor:
+                    query = "DELETE FROM beneficiary WHERE id = %s AND customer_id = %s"
+                    cursor.execute(query, [beneficiary_id, customer_id])
+                    if cursor.rowcount == 0:
+                        messages.error(request, 'Beneficiary not found or already deleted!')
+                    else:
+                        messages.success(request, 'Beneficiary deleted successfully!')
             except Exception as e:
-                messages.error(request, f'Error deleting beneficiary: {str(e)}')
+                messages.error(request, f'Error deleting beneficiary: {str(e)}')  
         
         return redirect('beneficiaries')
     
@@ -568,9 +783,17 @@ def profile_and_settings(request):
         
         # UPDATE PROFILE
         if action == 'update_profile':
-            phone = request.POST.get('phone')
-            address = request.POST.get('address')
-            
+            phone = request.POST.get('phone','').strip()
+            address = request.POST.get('address','').strip()
+
+        if not phone and not address:
+            messages.error(request, 'Please provide at least one field to update!')
+            return redirect('profile_and_settings')
+        
+        if len(phone) > 15:
+            messages.error(request, 'Invalid phone number!')
+            return redirect('profile_and_settings')
+        
             query = """
                 UPDATE customer 
                 SET phone = %s, address = %s
@@ -618,7 +841,7 @@ def profile_and_settings(request):
     context = {
         'customer': customer,
         'stats': stats,
-        'transaction_count': transaction_stats['transaction_count'],
+        'transaction_count': transaction_stats['transaction_count'] if transaction_stats else 0,
     }
     
     return render(request, 'profile and settings.html', context)

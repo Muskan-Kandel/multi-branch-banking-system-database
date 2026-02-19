@@ -68,6 +68,29 @@
         </div>
 
         <div class="card-body p-0">
+        <!-- added pagination to display large transaction history -->
+            </div> </div> 
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page|add:-1 }}{% if selected_account %}&account={{ selected_account }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}">Previous</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                    {% endif %}
+
+                    <li class="page-item active"><span class="page-link">Page {{ page }}</span></li>
+
+                    {% if has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page|add:1 }}{% if selected_account %}&account={{ selected_account }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}">Next</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link">Next</span></li>
+                    {% endif %}
+                </ul>
+            </nav>
             {% if transactions %}
                 <!-- Transactions List -->
                 <div class="list-group list-group-flush">

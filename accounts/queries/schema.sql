@@ -107,3 +107,8 @@ CREATE TABLE beneficiary (
         ON DELETE CASCADE
 );
 
+--alter customer table
+--------------------------------
+ALTER TABLE customer
+ADD COLUMN failed_attempts INTEGER DEFAULT 0,
+ADD COLUMN locked_until TIMESTAMP NULL;

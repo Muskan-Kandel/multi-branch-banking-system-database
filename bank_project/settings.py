@@ -80,7 +80,11 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'multibranch banking system ',
         'USER': 'postgres',
+<<<<<<< HEAD
         'PASSWORD': '3652',
+=======
+        'PASSWORD': 'muskan',
+>>>>>>> muskan-branch
         'HOST': 'localhost',
         'PORT': '5432',
     }
