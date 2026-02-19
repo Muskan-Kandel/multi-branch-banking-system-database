@@ -2,6 +2,22 @@
 {% block title %}Profile & Settings - IBANK{% endblock %}
 
 {% block content %}
+
+<!-- Custom Navy Styles -->
+<style>
+    /* Navy header for Personal Info card */
+    .card-header-navy {
+        background-color: #0b1a4a;  /* Navy color */
+        color: #fff;
+    }
+
+    /* Navy avatar icon */
+    .avatar-navy {
+        background-color: #0b1a4a; /* Navy background */
+        color: #fff;               /* White icon */
+    }
+</style>
+
 <div class="container mt-5 pt-4">
     
     <!-- Page Header -->
@@ -31,7 +47,7 @@
             <div class="card shadow-sm mb-3">
                 <div class="card-body text-center">
                     <!-- User Avatar -->
-                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" 
+                    <div class="avatar-navy rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" 
                          style="width: 100px; height: 100px;">
                         <i class="bi bi-person-fill" style="font-size: 3rem;"></i>
                     </div>
@@ -67,7 +83,7 @@
                     <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
                         <div>
                             <small class="text-muted d-block">Total Balance</small>
-                            <h5 class="mb-0">${{ stats.total_balance|default:"0.00" }}</h5>
+                            <h5 class="mb-0">NPR{{ stats.total_balance|default:"0.00" }}</h5>
                         </div>
                         <i class="bi bi-cash-stack text-success fs-3"></i>
                     </div>
@@ -105,7 +121,7 @@
             
             <!-- Personal Information -->
             <div class="card shadow-sm mb-4">
-                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <div class="card-header card-header-navy d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">
                         <i class="bi bi-person-circle me-2"></i>Personal Information
                     </h5>
@@ -162,9 +178,7 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="text-muted small mb-1">Account Status</label>
-                            <p class="mb-0">
-                                <span class="badge bg-success">Active</span>
-                            </p>
+                            <p class="mb-0"><span class="badge bg-success">Active</span></p>
                         </div>
                         <div class="col-md-6">
                             <label class="text-muted small mb-1">Account Type</label>
@@ -176,9 +190,7 @@
                         </div>
                         <div class="col-md-6">
                             <label class="text-muted small mb-1">Last Login</label>
-                            <p class="fw-semibold mb-0">
-                                {% now "F d, Y - h:i A" %}
-                            </p>
+                            <p class="fw-semibold mb-0">{% now "F d, Y - h:i A" %}</p>
                         </div>
                     </div>
                 </div>
@@ -192,42 +204,34 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    <div class="list-group list-group-flush">
-                        <div class="list-group-item px-0 d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="mb-1">Password</h6>
-                                <small class="text-muted">••••••••</small>
-                            </div>
-                            <button class="btn btn-outline-primary btn-sm" disabled>
-                                Change Password
-                            </button>
-                        </div>
-                        <div class="list-group-item px-0 d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="mb-1">Two-Factor Authentication</h6>
-                                <small class="text-muted">Add an extra layer of security</small>
-                            </div>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" disabled>
-                            </div>
-                        </div>
-                        <div class="list-group-item px-0 d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="mb-1">Login Alerts</h6>
-                                <small class="text-muted">Get notified of new login attempts</small>
-                            </div>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" checked disabled>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="alert alert-info mt-3 mb-0">
-                        <small>
-                            <i class="bi bi-info-circle me-1"></i>
-                            Security features are coming soon. Contact support for password reset.
-                        </small>
-                    </div>
+                    <div class="list-group list-group-flush"> 
+                        <div class="list-group-item px-0 d-flex justify-content-between align-items-center"> 
+                            <div> <h6 class="mb-1">Password</h6> <small class="text-muted">••••••••</small> 
+                            </div> 
+                            <button class="btn btn-outline-primary btn-sm" disabled> Change Password </button> 
+                        </div> 
+                        <div class="list-group-item px-0 d-flex justify-content-between align-items-center"> 
+                            <div> <h6 class="mb-1">Two-Factor Authentication</h6> <small class="text-muted">Add an extra layer of security</small> 
+                            </div> 
+                            <div class="form-check form-switch"> <input class="form-check-input" type="checkbox" disabled> 
+                            </div> 
+                        </div> 
+                        <div class="list-group-item px-0 d-flex justify-content-between align-items-center"> 
+                                <div> 
+                                    <h6 class="mb-1">Login Alerts</h6> <small class="text-muted">Get notified of new login attempts</small> 
+                                </div>
+                                 <div class="form-check form-switch"> <input class="form-check-input" type="checkbox" checked disabled> 
+                                </div> 
+                            </div> 
+                        </div> 
+                        <div class="alert alert-info mt-3 mb-0"> <small> <i class="bi bi-info-circle me-1"></i> Security features are coming soon. Contact support for password reset. </small> 
+                        </div> 
+                    </div> 
+                </div> 
+            </div> 
+        </div> 
+    </div>
+                    
                 </div>
             </div>
 

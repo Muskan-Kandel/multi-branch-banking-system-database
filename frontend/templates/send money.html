@@ -1,6 +1,38 @@
 {% extends "base.html" %}
 {% block title %}Send Money - IBANK{% endblock %}
 
+{% block extra_css %}
+<style>
+/* Navy blue buttons and card headers */
+.btn-primary, .btn-success, .btn-danger {
+    background-color: #0f024f !important;
+    border-color: #0f024f !important;
+    color: white !important;
+    transition: background-color 0.3s, transform 0.2s;
+}
+.btn-primary:hover, .btn-success:hover, .btn-danger:hover {
+    background-color: #1a056f !important;
+    transform: translateY(-2px);
+}
+
+/* Card hover effect */
+.card {
+    border-radius: 12px;
+    transition: transform 0.2s, box-shadow 0.3s;
+}
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+}
+
+/* Custom navy header for Transfer Money card */
+.transfer-card-header {
+    background-color: #0f024f !important;
+    color: white !important;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container mt-5 pt-4">
     
@@ -26,7 +58,7 @@
         <!-- Transfer Form (Left Column) -->
         <div class="col-lg-7">
             <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header transfer-card-header">
                     <h5 class="mb-0">
                         <i class="bi bi-send me-2"></i>Transfer Money
                     </h5>
@@ -43,7 +75,7 @@
                                 <option value="">Select source account...</option>
                                 {% for account in my_accounts %}
                                 <option value="{{ account.id }}" data-balance="{{ account.balance }}">
-                                    Account #{{ account.id }} - {{ account.account_type|title }} (Balance: ${{ account.balance }})
+                                    Account #{{ account.id }} - {{ account.account_type|title }} (Balance: NPR {{ account.balance }})
                                 </option>
                                 {% endfor %}
                             </select>
@@ -53,7 +85,7 @@
                         <!-- Available Balance Display -->
                         <div class="alert alert-info d-none" id="balanceAlert">
                             <small>
-                                <strong>Available Balance:</strong> $<span id="availableBalance">0.00</span>
+                                <strong>Available Balance:</strong> NPR <span id="availableBalance">0.00</span>
                             </small>
                         </div>
 
@@ -69,7 +101,7 @@
                         <div class="mb-4">
                             <label for="amount" class="form-label fw-semibold">Amount</label>
                             <div class="input-group input-group-lg">
-                                <span class="input-group-text">$</span>
+                                <span class="input-group-text">NPR</span>
                                 <input type="number" class="form-control" name="amount" id="amount" 
                                        step="0.01" min="1" required placeholder="0.00">
                             </div>
@@ -100,9 +132,8 @@
             </div>
         </div>
 
-        <!-- Quick Actions & Info (Right Column) -->
+        <!-- Right Column -->
         <div class="col-lg-5 mt-4 mt-lg-0">
-            
             <!-- My Accounts Summary -->
             <div class="card shadow-sm mb-3">
                 <div class="card-header bg-light">
@@ -121,7 +152,7 @@
                                         <small class="text-muted">{{ account.account_type|title }}</small>
                                     </div>
                                     <div class="text-end">
-                                        <h6 class="mb-0 text-success">${{ account.balance }}</h6>
+                                        <h6 class="mb-0 text-success">NPR {{ account.balance }}</h6>
                                     </div>
                                 </div>
                             </div>
@@ -142,23 +173,15 @@
                 </div>
                 <div class="card-body">
                     <ul class="mb-0 ps-3">
-                        <li class="mb-2">
-                            <small>Double-check the recipient account number</small>
-                        </li>
-                        <li class="mb-2">
-                            <small>Ensure you have sufficient balance</small>
-                        </li>
-                        <li class="mb-2">
-                            <small>Add a description to track your transfers</small>
-                        </li>
-                        <li class="mb-0">
-                            <small>Transfers are instant and cannot be reversed</small>
-                        </li>
+                        <li class="mb-2"><small>Double-check the recipient account number</small></li>
+                        <li class="mb-2"><small>Ensure you have sufficient balance</small></li>
+                        <li class="mb-2"><small>Add a description to track your transfers</small></li>
+                        <li class="mb-0"><small>Transfers are instant and cannot be reversed</small></li>
                     </ul>
                 </div>
             </div>
 
-            <!-- Recent Transfers (Optional) -->
+            <!-- Help Section -->
             <div class="card shadow-sm mt-3">
                 <div class="card-header bg-light">
                     <h6 class="mb-0">
@@ -166,24 +189,17 @@
                     </h6>
                 </div>
                 <div class="card-body">
-                    <p class="mb-2">
-                        <small><strong>Transfer Limits:</strong> No daily limit</small>
-                    </p>
-                    <p class="mb-2">
-                        <small><strong>Processing Time:</strong> Instant</small>
-                    </p>
-                    <p class="mb-0">
-                        <small><strong>Fees:</strong> No transfer fees</small>
-                    </p>
+                    <p class="mb-2"><small><strong>Transfer Limits:</strong> No daily limit</small></p>
+                    <p class="mb-2"><small><strong>Processing Time:</strong> Instant</small></p>
+                    <p class="mb-0"><small><strong>Fees:</strong> No transfer fees</small></p>
                 </div>
             </div>
 
         </div>
     </div>
-
 </div>
 
-<!-- JavaScript for dynamic balance display -->
+<!-- JS for dynamic balance display -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const fromAccountSelect = document.getElementById('fromAccount');
@@ -191,7 +207,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const availableBalanceSpan = document.getElementById('availableBalance');
     const amountInput = document.getElementById('amount');
 
-    // Show available balance when account is selected
     fromAccountSelect.addEventListener('change', function() {
         const selectedOption = this.options[this.selectedIndex];
         const balance = selectedOption.getAttribute('data-balance');
@@ -199,14 +214,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (balance) {
             availableBalanceSpan.textContent = parseFloat(balance).toFixed(2);
             balanceAlert.classList.remove('d-none');
-            amountInput.max = balance; // Set max amount
+            amountInput.max = balance;
         } else {
             balanceAlert.classList.add('d-none');
             amountInput.removeAttribute('max');
         }
     });
 
-    // Form validation before submit
     document.getElementById('transferForm').addEventListener('submit', function(e) {
         const selectedOption = fromAccountSelect.options[fromAccountSelect.selectedIndex];
         const balance = parseFloat(selectedOption.getAttribute('data-balance'));
@@ -214,14 +228,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (amount > balance) {
             e.preventDefault();
-            alert('Insufficient balance! Available: $' + balance.toFixed(2));
+            alert('Insufficient balance! Available: NPR ' + balance.toFixed(2));
             return false;
         }
 
-        // Confirm transfer
         const toAccount = document.getElementById('toAccount').value;
-        const confirmMsg = `Are you sure you want to transfer $${amount.toFixed(2)} to Account #${toAccount}?`;
-        
+        const confirmMsg = `Are you sure you want to transfer NPR ${amount.toFixed(2)} to Account #${toAccount}?`;
         if (!confirm(confirmMsg)) {
             e.preventDefault();
             return false;
@@ -229,5 +241,4 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-
 {% endblock %}

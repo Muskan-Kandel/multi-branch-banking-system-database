@@ -27,7 +27,7 @@
                             <option value="">All Accounts</option>
                             {% for account in accounts %}
                             <option value="{{ account.id }}" {% if selected_account == account.id|stringformat:"s" %}selected{% endif %}>
-                                Account #{{ account.id }} - {{ account.account_type|title }} (${{ account.balance }})
+                                Account #{{ account.id }} - {{ account.account_type|title }} (NPR{{ account.balance }})
                             </option>
                             {% endfor %}
                         </select>
@@ -46,9 +46,10 @@
 
                     <!-- Buttons -->
                     <div class="col-md-4 d-flex align-items-end gap-2">
-                        <button type="submit" class="btn btn-primary flex-grow-1">
+                        <button type="submit" class="btn flex-grow-1" style="background-color:#0f024f; color:white; border:none;">
                             <i class="bi bi-search me-1"></i>Apply
                         </button>
+
                         <a href="{% url 'transactions' %}" class="btn btn-outline-secondary">
                             <i class="bi bi-x-lg"></i>
                         </a>
@@ -60,7 +61,8 @@
 
     <!-- Transactions Card -->
     <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <div class="card-header text-white d-flex justify-content-between align-items-center" style="background-color:#0f024f;">
+
             <h5 class="mb-0">Recent Transactions</h5>
             <span class="badge bg-light text-primary">{{ transactions|length }} transaction{{ transactions|length|pluralize }}</span>
         </div>
@@ -114,11 +116,11 @@
                             <!-- Right: Amount -->
                             <div class="text-end">
                                 {% if transaction.transaction_type == 'deposit' %}
-                                    <h5 class="mb-0 text-success fw-bold">+${{ transaction.amount }}</h5>
+                                    <h5 class="mb-0 text-success fw-bold">+NPR{{ transaction.amount }}</h5>
                                 {% elif transaction.transaction_type == 'withdraw' %}
-                                    <h5 class="mb-0 text-danger fw-bold">-${{ transaction.amount }}</h5>
+                                    <h5 class="mb-0 text-danger fw-bold">-NPR{{ transaction.amount }}</h5>
                                 {% else %}
-                                    <h5 class="mb-0 text-primary fw-bold">${{ transaction.amount }}</h5>
+                                    <h5 class="mb-0 text-primary fw-bold">NPR{{ transaction.amount }}</h5>
                                 {% endif %}
                             </div>
                         </div>
