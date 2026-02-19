@@ -1,69 +1,100 @@
 {% extends "base.html" %}
+{% load static %}
+
 {% block title %} Login - IBANK {% endblock %}
 
-
 {% block content %}
-<body>
-<div class="container d-flex justify-content-center align-items-center mt-5">
-    <div class="col-md-4 login-card">
 
-        <h4 class="text-center mb-4 fw-bold">Sign In</h4>
-        
-        <!-- Display Django messages (success/error) -->
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
+<style>
+  body { margin: 0; }
+  .main-container { display: flex; min-height: 100vh; }
+  .left-section {
+    flex: 1;
+    background-image: url("{% static 'images/login.png' %}");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+  .right-section {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f4f6f9;
+  }
+  .login-card {
+    background: white;
+    width: 100%;
+    max-width: 420px;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  }
+  .login-title { text-align: center; font-weight: bold; margin-bottom: 25px; }
 
-        <!-- Display form errors -->
-        {% if form.non_field_errors %}
-        <div class="alert alert-danger">
-            {{ form.non_field_errors.as_ul }}
-        </div>
-        {% endif %}
+  .btn-navy {
+    background-color: #02122e !important;
+    color: white !important;
+    border: none;
+  }
+  .btn-navy:hover,
+  .btn-navy:focus,
+  .btn-navy:active {
+    background-color: #02122e !important;
+    color: white !important;
+    opacity: 1 !important;
+    box-shadow: none !important;
+  }
+</style>
 
-        <form method="post" action="{% url 'login' %}">
-            {% csrf_token %}
-            <div class="mb-3">
-                <input type="text" name="username" class="form-control" placeholder="Username" required>
-            </div>
+<div class="main-container">
+  <div class="left-section"></div>
 
-            <div class="mb-2">
-                <input type="password" name="password" class="form-control" placeholder="Password" required>
-                <small class="text-muted">
-                    Must be 8–20 characters long
-                </small>
-            </div>
+  <div class="right-section">
+    <div class="login-card">
+      <h4 class="login-title">Sign In</h4>
 
-            <div class="d-flex justify-content-between align-items-center my-3">
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="remember">
-                    <label class="form-check-label" for="remember">
-                        Remember me
-                    </label>
-                </div>
-            </div>
+      <!-- JS Alert for Django messages -->
+      {% if messages %}
+      <script>
+        {% for message in messages %}
+            alert("{{ message }}");
+        {% endfor %}
+      </script>
+      {% endif %}
 
-            <div class="mb-3">
-                <a href="#" class="text-decoration-none">Forgot password?</a>
-            </div>
+      <!-- Form -->
+      <form method="post" action="{% url 'login' %}">
+          {% csrf_token %}
 
-            <button type="submit" class="btn btn-dark w-100">
-                Sign In
-            </button>
+          <div class="mb-3">
+              <input type="text" name="username" class="form-control" placeholder="Username" required>
+          </div>
 
-            <p class="text-center mt-3">
-                Don't have an account?
-                <a href="{% url 'register' %}" class="text-decoration-none">Sign Up</a>
-            </p>
+          <div class="mb-2">
+              <input type="password" name="password" class="form-control" placeholder="Password" required>
+              <small class="text-muted">Must be 8–20 characters long</small>
+          </div>
 
-        </form>
+          <div class="d-flex justify-content-between align-items-center my-3">
+              <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="remember">
+                  <label class="form-check-label" for="remember">Remember me</label>
+              </div>
+          </div>
 
+          <div class="mb-3">
+              <a href="#" class="text-decoration-none">Forgot password?</a>
+          </div>
+
+          <button type="submit" class="btn btn-navy w-100">Sign In</button>
+
+          <p class="text-center mt-3">
+              Don't have an account? <a href="{% url 'register' %}" class="text-decoration-none">Sign Up</a>
+          </p>
+      </form>
     </div>
+  </div>
 </div>
-</body>
+
 {% endblock %}

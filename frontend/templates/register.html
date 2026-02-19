@@ -1,85 +1,142 @@
 {% extends "base.html" %}
+{% load static %}
+
 {% block title %} Register - IBANK {% endblock %}
 
-
 {% block content %}
-<body>
-    <div class="container d-flex justify-content-center align-items-center mt-5">
-  <div class="col-md-5 register-card">
 
-    <h4 class="text-center mb-4 fw-bold">Create New Account</h4>
+<style>
+  body {
+    margin: 0;
+  }
 
-    <!-- Display error messages if any -->
-    {% if messages %}
-      {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-          {{ message }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-      {% endfor %}
-    {% endif %}
+  .register-container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f4f6f9;
+  }
 
-    <form method="post" action="{% url 'register' %}">
+  .register-card {
+    background: white;
+    width: 100%;
+    max-width: 520px;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    overflow: hidden; /* ensures heading background is clipped */
+  }
+
+  .register-title {
+    text-align: center;
+    font-weight: bold;
+    margin: 0;
+    padding: 20px;
+    background-color: #001f54; /* navy blue */
+    color: white;
+    font-size: 1.5rem;
+  }
+
+  .register-body {
+    padding: 30px;
+  }
+
+  .btn-navy {
+    background-color: #001f54 !important;
+    color: white !important;
+    border: none;
+  }
+
+  .btn-navy:hover,
+  .btn-navy:focus,
+  .btn-navy:active {
+    background-color: #001f54 !important;
+    color: white !important;
+    opacity: 1 !important;
+    box-shadow: none !important;
+  }
+</style>
+
+<div class="register-container">
+  <div class="register-card">
+
+    <!-- NAVY BLUE HEADING -->
+    <div class="register-title">Create New Account</div>
+
+    <!-- CARD BODY -->
+    <div class="register-body">
+
+      <!-- Django Messages -->
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="post" action="{% url 'register' %}">
         {% csrf_token %}
 
-      <div class="mb-3">
-        <input type="text" name="username" class="form-control" placeholder="Username" required>
-        <small class="text-muted">Choose a unique username</small>
-      </div>
+        <div class="mb-3">
+          <input type="text" name="username" class="form-control" placeholder="Username" required>
+          <small class="text-muted">Choose a unique username</small>
+        </div>
 
-      <div class="mb-3">
-        <input type="email" name="email" class="form-control" placeholder="Email Address" required>
-        <small class="text-muted">We'll never share your email</small>
-      </div>
+        <div class="mb-3">
+          <input type="email" name="email" class="form-control" placeholder="Email Address" required>
+          <small class="text-muted">We'll never share your email</small>
+        </div>
 
-      <div class="mb-3">
-        <input type="text" name="first_name" class="form-control" placeholder="First Name" required>
-      </div>
+        <div class="mb-3">
+          <input type="text" name="first_name" class="form-control" placeholder="First Name" required>
+        </div>
 
-      <div class="mb-3">
-        <input type="text" name="last_name" class="form-control" placeholder="Last Name" required>
-      </div>
+        <div class="mb-3">
+          <input type="text" name="last_name" class="form-control" placeholder="Last Name" required>
+        </div>
 
-      <div class="mb-3">
-        <input type="tel" name="phone" class="form-control" placeholder="Phone Number" required>
-        <small class="text-muted">Format: 98XXXXXXXXX</small>
-      </div>
+        <div class="mb-3">
+          <input type="tel" name="phone" class="form-control" placeholder="Phone Number" required>
+          <small class="text-muted">Format: 98XXXXXXXXX</small>
+        </div>
 
-      <div class="mb-3">
-        <textarea name="address" class="form-control" rows="2" placeholder="Full Address" required></textarea>
-        <small class="text-muted">Include city and postal code</small>
-      </div>
+        <div class="mb-3">
+          <textarea name="address" class="form-control" rows="2" placeholder="Full Address" required></textarea>
+          <small class="text-muted">Include city and postal code</small>
+        </div>
 
-      <div class="mb-3">
-        <input type="password" name="password1" class="form-control" placeholder="Password" required>
-        <small class="text-muted">Must be 8–20 characters long</small>
-      </div>
+        <div class="mb-3">
+          <input type="password" name="password1" class="form-control" placeholder="Password" required>
+          <small class="text-muted">Must be 8–20 characters long</small>
+        </div>
 
-      <div class="mb-3">
-        <input type="password" name="password2" class="form-control" placeholder="Confirm Password" required>
-        <small class="text-muted">Enter the same password again</small>
-      </div>
+        <div class="mb-3">
+          <input type="password" name="password2" class="form-control" placeholder="Confirm Password" required>
+          <small class="text-muted">Enter the same password again</small>
+        </div>
 
-      <div class="form-check mb-4">
-        <input class="form-check-input" type="checkbox" id="terms" required>
-        <label class="form-check-label" for="terms">
-          I agree to terms and conditions
-        </label>
-      </div>
+        <div class="form-check mb-4">
+          <input class="form-check-input" type="checkbox" id="terms" required>
+          <label class="form-check-label" for="terms">
+            I agree to terms and conditions
+          </label>
+        </div>
 
-      <button type="submit" class="btn btn-secondary w-100 mb-3">
-        Create Account
-      </button>
+        <button type="submit" class="btn btn-navy w-100 mb-3">
+          Create Account
+        </button>
 
-      <p class="text-center">
-        Already have an account?
-        <a href="{% url 'login' %}" class="text-decoration-none">Sign in</a>
-      </p>
+        <p class="text-center">
+          Already have an account?
+          <a href="{% url 'login' %}" class="text-decoration-none">Sign in</a>
+        </p>
 
-    </form>
+      </form>
+    </div>
 
   </div>
 </div>
 
-</body>
 {% endblock %}

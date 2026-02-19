@@ -1,14 +1,16 @@
-
 {% extends "base.html" %}
 {% load static %}
 {% block title %}Dashboard - IBANK{% endblock %}
+
 {% block extra_css %}
 <style>
 .image-slideshow {
   position: relative;
-  height: 100vh;
+  height: 400px;
+  width: 100%;
   overflow: hidden;
-   background: #f8f9fa
+  background: #f8f9fa;
+  border-radius: 10px;
 }
 
 .slide {
@@ -17,14 +19,13 @@
   left: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain; 
+  object-fit: cover; 
   opacity: 0;
   animation: slideshow 6s infinite;
 }
 
 .slide:nth-child(1) { animation-delay: 0s; }
 .slide:nth-child(2) { animation-delay: 3s; }
-/*.slide:nth-child(3) { animation-delay: 6s; } */
 
 @keyframes slideshow {
   0% { opacity: 0; }
@@ -33,6 +34,39 @@
   40% { opacity: 0; }
   100% { opacity: 0; }
 }
+
+/* Dashboard Buttons with Icons */
+.dashboard-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.dashboard-buttons a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 15px;
+  border-radius: 10px;
+  color: white;
+  font-weight: 500;
+  background-color: #0f024f;
+  text-decoration: none;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.dashboard-buttons a:hover {
+  background-color: #1a056f;
+  transform: translateY(-3px);
+}
+
+.dashboard-buttons i {
+  font-size: 1.5rem;
+  margin-bottom: 6px;
+}
 </style>
 {% endblock %}
 
@@ -40,78 +74,50 @@
 
 <div class="container">
 
-  <!-- Account Summary (Half Width) -->
+  <!-- Account Summary -->
   <div class="row">
     <div class="col-md-8 mt-4">
       <div class="card shadow-sm mb-3">
         <div class="card-header text-white" style="background-color:#0f024f;">
           Account Summary
         </div>
-
         <div class="card-body">
-          <h6 class="card-title mb-2">
-            {{ user.username }}
-          </h6>
-
-          <p class="mb-1">
-            <strong>Account Number:</strong>
-            {{ account.account_number }}
-          </p>
-
-          <p class="mb-1">
-            <strong>Account Type:</strong>
-            {{ account.account_type }}
-          </p>
-
-          <p class="mb-0">
-            <strong>Available Balance:</strong>
-            <span class="text-success fw-bold">
-              NPR {{ account.balance }}
-            </span>
-          </p>
+          <h6 class="card-title mb-2">{{ user.username }}</h6>
+          <p class="mb-1"><strong>Account Number:</strong> {{ account.account_number }}</p>
+          <p class="mb-1"><strong>Account Type:</strong> {{ account.account_type }}</p>
+          <p class="mb-0"><strong>Available Balance:</strong> <span class="text-success fw-bold">NPR {{ account.balance }}</span></p>
         </div>
       </div>
 
-      <!-- Quick Actions-->
-      <div class="mb-4">
-        <a class="btn btn-sm me-2 mb-2"
-           style="background-color:#0f024f;color:white;"
-           href="{% url 'accounts' %}">
+      <!-- Quick Actions with Icons -->
+      <div class="dashboard-buttons">
+        <a href="{% url 'accounts' %}">
+          <i class="bi bi-wallet2"></i>
           Accounts
-        </a>       
-      <div class="mb-4">
-        <a class="btn btn-sm me-2 mb-2"
-           style="background-color:#0f024f;color:white;"
-           href="{% url 'send money' %}">
+        </a>
+        <a href="{% url 'send money' %}">
+          <i class="bi bi-currency-exchange"></i>
           Send
         </a>
-
-        <a class="btn btn-sm me-2 mb-2"
-           style="background-color:#0f024f;color:white;"
-           href="{% url 'transactions' %}">
+        <a href="{% url 'transactions' %}">
+          <i class="bi bi-receipt"></i>
           Transactions
         </a>
-
-        <a class="btn btn-sm me-2 mb-2"
-           style="background-color:#0f024f;color:white;"
-           href="{% url 'beneficiaries' %}">
+        <a href="{% url 'beneficiaries' %}">
+          <i class="bi bi-people"></i>
           Beneficiary
         </a>
-
-        <a class="btn btn-sm mb-2"
-           style="background-color:#0f024f;color:white;"
-           href="{% url 'profile and settings' %}">
+        <a href="{% url 'profile and settings' %}">
+          <i class="bi bi-person-circle"></i>
           Profile
         </a>
       </div>
 
       <!-- Recent Transactions -->
       <div class="card shadow-sm">
-        <div class="card-header" 
-            style="background-color:#0f024f;color:white;">
+        <div class="card-header" style="background-color:#0f024f;color:white;">
           Recent Transactions
         </div>
-
         <div class="card-body p-0">
           <table class="table table-sm mb-0">
             <thead class="table-light">
@@ -137,22 +143,22 @@
               </tr>
               {% empty %}
               <tr>
-                <td colspan="3" class="text-center text-muted">
-                  No recent transactions
-                </td>
+                <td colspan="3" class="text-center text-muted">No recent transactions</td>
               </tr>
               {% endfor %}
             </tbody>
           </table>
         </div>
       </div>
-    </div>
-  <!-- image stack -->
-    <div class="col-md-4 p-0" >
-      <div class="image-slideshow w-100">
-        <img src="{% static 'img1.png' %}" class="slide">
-        <img src="{% static 'img2.png' %}" class="slide">
+
+      <!-- Image Slideshow -->
+      <div class="mt-3 px-0 mx-0">
+        <div class="image-slideshow w-100">
+          <img src="{% static 'img1.png' %}" class="slide">
+          <img src="{% static 'img2.png' %}" class="slide">
+        </div>
       </div>
+
     </div>
   </div>
 </div>

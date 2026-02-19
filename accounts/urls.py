@@ -4,6 +4,7 @@ from django.urls import path
 from . import views
 
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import views as auth_views
 
 
 
@@ -20,6 +21,10 @@ urlpatterns = [
     path('transactions/', views.transactions, name='transactions'),
     path('beneficiaries/', views.beneficiaries, name='beneficiaries'),
     path('profile and settings/', views.profile_and_settings, name='profile and settings'),
+    path('logout/', views.custom_logout, name='logout'),
+
+
+
 ]
  
 

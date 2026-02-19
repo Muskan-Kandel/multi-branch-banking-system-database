@@ -6,6 +6,10 @@ from django.contrib import messages
 from django.db import connection
 from decimal import Decimal
 from datetime import datetime
+from django.contrib.auth import logout
+from django.contrib import messages
+from django.shortcuts import redirect
+
 
 # ============================================
 # HELPER FUNCTIONS FOR DATABASE OPERATIONS
@@ -618,3 +622,13 @@ def profile_and_settings(request):
     }
     
     return render(request, 'profile and settings.html', context)
+
+
+
+def custom_logout(request):
+    logout(request)  # Logs out the user
+    messages.success(request, "Logout successful!")  # Set a Django message
+    return redirect('login')  # Redirect to login page
+
+
+

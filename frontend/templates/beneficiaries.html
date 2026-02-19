@@ -2,6 +2,34 @@
 {% block title %}Beneficiaries - IBANK{% endblock %}
 
 {% block content %}
+<!-- Custom Navy Button CSS -->
+<style>
+/* Solid Navy Button */
+.btn-navy {
+    background-color: #0b1a4a;  /* dark navy */
+    color: #fff;
+    border: 1px solid #0b1a4a;
+}
+.btn-navy:hover,
+.btn-navy:focus {
+    background-color: #13225f;  /* slightly lighter navy on hover */
+    border-color: #13225f;
+    color: #fff;
+}
+
+/* Outline Navy Button */
+.btn-outline-navy {
+    color: #0b1a4a;
+    border-color: #0b1a4a;
+}
+.btn-outline-navy:hover,
+.btn-outline-navy:focus {
+    background-color: #0b1a4a;
+    color: #fff;
+    border-color: #0b1a4a;
+}
+</style>
+
 <div class="container mt-5 pt-4">
     
     <!-- Page Header -->
@@ -11,7 +39,7 @@
             <p class="text-muted">Manage your saved beneficiaries for quick transfers</p>
         </div>
         <div class="col-auto">
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBeneficiaryModal">
+            <button class="btn btn-navy" data-bs-toggle="modal" data-bs-target="#addBeneficiaryModal">
                 <i class="bi bi-plus-circle me-2"></i>Add Beneficiary
             </button>
         </div>
@@ -33,24 +61,18 @@
         {% for beneficiary in beneficiaries %}
         <div class="col-md-6 col-lg-4">
             <div class="card shadow-sm h-100">
-                <!-- Card Header with Beneficiary Initial -->
                 <div class="card-body">
                     <div class="d-flex align-items-start mb-3">
-                        <!-- Beneficiary Avatar/Initial -->
-                        <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 me-3" 
-                             style="width: 55px; height: 55px;">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 me-3" 
+                             style="width:55px;height:55px;background:#e8e6f5;color:#0f024f;">
                             <h4 class="mb-0 fw-bold">{{ beneficiary.name|slice:":1"|upper }}</h4>
                         </div>
-                        
-                        <!-- Beneficiary Name -->
                         <div class="flex-grow-1">
                             <h5 class="mb-1 fw-semibold">{{ beneficiary.name }}</h5>
                             <small class="text-muted">
                                 <i class="bi bi-building me-1"></i>{{ beneficiary.bank_name }}
                             </small>
                         </div>
-
-                        <!-- Delete Button -->
                         <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" 
                                 data-bs-target="#deleteBeneficiaryModal{{ beneficiary.id }}" title="Remove">
                             <i class="bi bi-trash"></i>
@@ -71,7 +93,6 @@
                                     </button>
                                 </p>
                             </div>
-                            
                             <div class="col-12">
                                 <small class="text-muted d-block mb-1">IFSC Code</small>
                                 <p class="mb-0 fw-semibold">
@@ -89,14 +110,14 @@
 
                 <!-- Card Footer with Quick Send Button -->
                 <div class="card-footer bg-transparent">
-                    <a href="{% url 'send money' %}?beneficiary={{ beneficiary.id }}" class="btn btn-outline-primary w-100">
+                    <a href="{% url 'send money' %}?beneficiary={{ beneficiary.id }}" class="btn btn-outline-navy w-100">
                         <i class="bi bi-send me-2"></i>Send Money
                     </a>
                 </div>
             </div>
         </div>
 
-        <!-- Delete Confirmation Modal for this beneficiary -->
+        <!-- Delete Confirmation Modal -->
         <div class="modal fade" id="deleteBeneficiaryModal{{ beneficiary.id }}" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
@@ -139,7 +160,7 @@
             <i class="bi bi-people text-muted" style="font-size: 4rem;"></i>
             <h5 class="mt-3 text-muted">No Beneficiaries Yet</h5>
             <p class="text-muted mb-4">Add beneficiaries for quick and easy money transfers</p>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBeneficiaryModal">
+            <button class="btn btn-navy" data-bs-toggle="modal" data-bs-target="#addBeneficiaryModal">
                 <i class="bi bi-plus-circle me-2"></i>Add Your First Beneficiary
             </button>
         </div>
@@ -264,7 +285,7 @@
 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="btn btn-navy">
                         <i class="bi bi-check-circle me-1"></i>Add Beneficiary
                     </button>
                 </div>
@@ -276,21 +297,17 @@
 <!-- JavaScript for copy to clipboard functionality -->
 <script>
 function copyToClipboard(text) {
-    // Create temporary textarea
     const textarea = document.createElement('textarea');
     textarea.value = text;
     textarea.style.position = 'fixed';
     textarea.style.opacity = '0';
     document.body.appendChild(textarea);
     
-    // Select and copy
     textarea.select();
     document.execCommand('copy');
     
-    // Remove textarea
     document.body.removeChild(textarea);
     
-    // Show feedback (optional - you can add a toast notification here)
     alert('Copied: ' + text);
 }
 
