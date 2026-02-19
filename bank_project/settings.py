@@ -74,13 +74,13 @@ WSGI_APPLICATION = 'bank_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-
+import dj_database_url
 DATABASES = {
-    'default': {
+    'default': dj_database_url.parse('postgresql://default:bPdRk1CD3zKvWZso3x3nXAHFgktqZV6Q@dpg-d6bhvo6mcj7s73aj94v0-a.singapore-postgres.render.com/db_database_jfrf') {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'db_database',
         'USER': 'postgres',
-        'PASSWORD': 'muskan',
+        'PASSWORD': 'abhishek',
         'HOST': 'localhost',
         'PORT': '5432',
     }

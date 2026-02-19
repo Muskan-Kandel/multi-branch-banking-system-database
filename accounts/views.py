@@ -370,7 +370,7 @@ def accounts(request):
                     with connection.cursor() as cursor:
                         cursor.execute(update_query, [amount, account_id, customer_id])
                         cursor.execute(transaction_query, [account_id, amount, description])
-                messages.success(request, f'Successfully deposited ${amount}!')
+                messages.success(request, f'Successfully deposited NPR{amount}!')
 
             except Exception as e:
                 messages.error(request, f'Deposit failed: {str(e)}')
@@ -418,7 +418,7 @@ def accounts(request):
                     with connection.cursor() as cursor:
                         cursor.execute(update_query, [amount, account_id, customer_id, amount])
                         cursor.execute(transaction_query, [account_id, amount, description])
-                messages.success(request, f'Successfully withdrawn ${amount}!')
+                messages.success(request, f'Successfully withdrawn NPR{amount}!')
             
             except Exception as e:
                 messages.error(request, f'Withdrawal failed: {str(e)}')
@@ -522,7 +522,7 @@ def send_money(request):
 
                     if cursor.rowcount == 0:
                         messages.error(request, 'Transfer failed: Recipient account not found or inactive!')
-                        return redirect('send_money')
+                        return redirect('send money')
                     
                     # Record sender's transaction
                     cursor.execute("""
@@ -536,12 +536,12 @@ def send_money(request):
                         VALUES (%s, 'deposit', %s, CURRENT_TIMESTAMP, %s)
                     """, [to_account_id, amount, f'Transfer from Account #{from_account_id}: {description}'])
                     
-                    messages.success(request, f'Successfully transferred ${amount}!')
-                    return redirect('send_money')
+                    messages.success(request, f'Successfully transferred NPR{amount}!')
+                    return redirect('send money')
             
         except Exception as e:
             messages.error(request, f'Transfer failed: {str(e)}')
-        return redirect('send_money')
+        return redirect('send money')
     
     # GET request
     accounts_query = """
