@@ -5,7 +5,7 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import connection
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from datetime import datetime
 from django.contrib.auth.models import User
 from django.db import transaction
@@ -298,6 +298,10 @@ def accounts(request):
     # Get customer ID
     customer_query = "SELECT id FROM customer WHERE user_id = %s"
     customer = execute_single(customer_query, [user_id])
+    
+    if not customer:
+        messages.error(request, 'Customer profile not found!')
+        return redirect('login')
     customer_id = customer['id']
     
     if request.method == 'POST':
@@ -308,6 +312,19 @@ def accounts(request):
             account_type = request.POST.get('account_type')
             branch_id = request.POST.get('branch_id')
             initial_balance = request.POST.get('initial_balance', 0)
+
+            # Validate account type and initial balance
+            VALID_ACCOUNT_TYPES = ['savings', 'current']
+            if account_type not in VALID_ACCOUNT_TYPES:
+                messages.error(request, 'Invalid account type selected!')
+                return redirect('accounts')
+            try:
+                initial_balance = Decimal(initial_balance)
+                if initial_balance < 0:
+                    raise ValueError('Initial balance cannot be negative!')
+            except (ValueError, InvalidOperation):
+                messages.error(request, 'Invalid initial balance format.')
+                return redirect('accounts')
             
             query = """
                 INSERT INTO account (customer_id, branch_id, account_type, balance, created_at, updated_at)
@@ -324,8 +341,17 @@ def accounts(request):
         # DEPOSIT MONEY
         elif action == 'deposit':
             account_id = request.POST.get('account_id')
-            amount = Decimal(request.POST.get('amount'))
+            amount = request.POST.get('amount')
             description = request.POST.get('description', 'Deposit')
+
+            # Validate amount
+            try:
+                amount = Decimal(amount)
+                if amount <= 0:
+                    raise ValueError('Deposit amount must be positive!')
+            except (ValueError, InvalidOperation) as e:
+                messages.error(request, f'Invalid deposit amount: {str(e)}')
+                return redirect('accounts')
             
             try:
                 # Update account balance
@@ -334,16 +360,18 @@ def accounts(request):
                     SET balance = balance + %s, updated_at = CURRENT_TIMESTAMP
                     WHERE id = %s AND customer_id = %s
                 """
-                execute_query(update_query, [amount, account_id, customer_id])
-                
+                 
                 # Record transaction
                 transaction_query = """
                     INSERT INTO transaction (account_id, transaction_type, amount, timestamp, description)
                     VALUES (%s, 'deposit', %s, CURRENT_TIMESTAMP, %s)
                 """
-                execute_query(transaction_query, [account_id, amount, description])
-                
+                with transaction.atomic():
+                    with connection.cursor() as cursor:
+                        cursor.execute(update_query, [amount, account_id, customer_id])
+                        cursor.execute(transaction_query, [account_id, amount, description])
                 messages.success(request, f'Successfully deposited ${amount}!')
+
             except Exception as e:
                 messages.error(request, f'Deposit failed: {str(e)}')
             
@@ -354,6 +382,15 @@ def accounts(request):
             account_id = request.POST.get('account_id')
             amount = Decimal(request.POST.get('amount'))
             description = request.POST.get('description', 'Withdrawal')
+
+            # Validate withdrawal amount
+            try:
+                amount = Decimal(amount)
+                if amount <= 0:
+                    raise ValueError('Withdrawal amount must be positive!')
+            except (ValueError, InvalidOperation) as e:
+                messages.error(request, f'Invalid withdrawal amount: {str(e)}')
+                return redirect('accounts')
             
             try:
                 # Check balance
@@ -368,18 +405,21 @@ def accounts(request):
                 update_query = """
                     UPDATE account 
                     SET balance = balance - %s, updated_at = CURRENT_TIMESTAMP
-                    WHERE id = %s AND customer_id = %s
+                    WHERE id = %s AND customer_id = %s AND balance >= %s
                 """
-                execute_query(update_query, [amount, account_id, customer_id])
+                
                 
                 # Record transaction
                 transaction_query = """
                     INSERT INTO transaction (account_id, transaction_type, amount, timestamp, description)
                     VALUES (%s, 'withdraw', %s, CURRENT_TIMESTAMP, %s)
                 """
-                execute_query(transaction_query, [account_id, amount, description])
-                
+                with transaction.atomic():
+                    with connection.cursor() as cursor:
+                        cursor.execute(update_query, [amount, account_id, customer_id, amount])
+                        cursor.execute(transaction_query, [account_id, amount, description])
                 messages.success(request, f'Successfully withdrawn ${amount}!')
+            
             except Exception as e:
                 messages.error(request, f'Withdrawal failed: {str(e)}')
             
@@ -418,80 +458,90 @@ def send_money(request):
     # Get customer ID
     customer_query = "SELECT id FROM customer WHERE user_id = %s"
     customer = execute_single(customer_query, [user_id])
+
+    # If customer profile is not found, log out the user and redirect to login page
+    if not customer:
+        messages.error(request, 'Customer profile not found!')
+        return redirect('login')
     customer_id = customer['id']
     
     if request.method == 'POST':
         from_account_id = request.POST.get('from_account')
         to_account_number = request.POST.get('to_account')
-        amount = Decimal(request.POST.get('amount'))
+        amount = (request.POST.get('amount'))
         description = request.POST.get('description', 'Transfer')
         
+        # Validate transfer amount
         try:
-            cursor = connection.cursor()
-            
-            # Check sender's balance
-            cursor.execute("""
-                SELECT balance FROM account 
-                WHERE id = %s AND customer_id = %s
-            """, [from_account_id, customer_id])
-            
-            sender_account = cursor.fetchone()
-            if not sender_account:
-                messages.error(request, 'Invalid account!')
-                return redirect('send_money')
-            
-            if Decimal(sender_account[0]) < amount:
-                messages.error(request, 'Insufficient balance!')
-                return redirect('send_money')
-            
-            # Find recipient account by account number (using account ID as account number for simplicity)
-            cursor.execute("""
-                SELECT id, customer_id FROM account WHERE id = %s
-            """, [to_account_number])
-            
-            recipient = cursor.fetchone()
-            if not recipient:
-                messages.error(request, 'Recipient account not found!')
-                return redirect('send_money')
-            
-            to_account_id = recipient[0]
-            
-            # Deduct from sender
-            cursor.execute("""
-                UPDATE account 
-                SET balance = balance - %s, updated_at = CURRENT_TIMESTAMP
-                WHERE id = %s
-            """, [amount, from_account_id])
-            
-            # Add to recipient
-            cursor.execute("""
-                UPDATE account 
-                SET balance = balance + %s, updated_at = CURRENT_TIMESTAMP
-                WHERE id = %s
-            """, [amount, to_account_id])
-            
-            # Record sender's transaction
-            cursor.execute("""
-                INSERT INTO transaction (account_id, transaction_type, amount, timestamp, description)
-                VALUES (%s, 'transfer', %s, CURRENT_TIMESTAMP, %s)
-            """, [from_account_id, amount, f'Transfer to Account #{to_account_id}: {description}'])
-            
-            # Record recipient's transaction
-            cursor.execute("""
-                INSERT INTO transaction (account_id, transaction_type, amount, timestamp, description)
-                VALUES (%s, 'deposit', %s, CURRENT_TIMESTAMP, %s)
-            """, [to_account_id, amount, f'Transfer from Account #{from_account_id}: {description}'])
-            
-            connection.commit()
-            cursor.close()
-            
-            messages.success(request, f'Successfully transferred ${amount}!')
+            amount = Decimal(amount)
+            if amount <= 0:
+                raise ValueError('Transfer amount must be positive!')
+        except (ValueError, InvalidOperation) as e:
+            messages.error(request, f'Invalid transfer amount: {str(e)}')
             return redirect('send_money')
+        
+        # Prevent transferring to the same account
+        if str(from_account_id) == str(to_account_number):
+            messages.error(request, 'Cannot transfer to the same account!')
+            return redirect('send_money')
+        
+        try:
+            with transaction.atomic():
+                 with connection.cursor() as cursor:
+                        
+                    # Find recipient account by account number (using account ID as account number for simplicity)
+                    cursor.execute("""
+                        SELECT id, customer_id FROM account 
+                        WHERE id = %s AND is_active = TRUE
+                    """, [to_account_number])
+                    
+                    recipient = cursor.fetchone()
+                    if not recipient:
+                        messages.error(request, 'Recipient account not found!')
+                        return redirect('send_money')
+                    
+                    to_account_id = recipient[0]
+                    
+                    # Deduct from sender(atomic balance check + deduction to prevent race conditions)
+                    cursor.execute("""
+                        UPDATE account 
+                        SET balance = balance - %s, updated_at = CURRENT_TIMESTAMP
+                        WHERE id = %s AND customer_id = %s AND balance >= %s AND is_active = TRUE
+                    """, [amount, from_account_id, customer_id, amount])
+                    
+                    if cursor.rowcount == 0:
+                        messages.error(request, 'Transfer failed due to insufficient balance or inactive account!')
+                        return redirect('send_money')
+                    
+                    # Add to recipient
+                    cursor.execute("""
+                        UPDATE account 
+                        SET balance = balance + %s, updated_at = CURRENT_TIMESTAMP
+                        WHERE id = %s AND is_active = TRUE
+                    """, [amount, to_account_id])
+
+                    if cursor.rowcount == 0:
+                        messages.error(request, 'Transfer failed: Recipient account not found or inactive!')
+                        return redirect('send_money')
+                    
+                    # Record sender's transaction
+                    cursor.execute("""
+                        INSERT INTO transaction (account_id, transaction_type, amount, timestamp, description)
+                        VALUES (%s, 'transfer', %s, CURRENT_TIMESTAMP, %s)
+                    """, [from_account_id, amount, f'Transfer to Account #{to_account_id}: {description}'])
+                    
+                    # Record recipient's transaction
+                    cursor.execute("""
+                        INSERT INTO transaction (account_id, transaction_type, amount, timestamp, description)
+                        VALUES (%s, 'deposit', %s, CURRENT_TIMESTAMP, %s)
+                    """, [to_account_id, amount, f'Transfer from Account #{from_account_id}: {description}'])
+                    
+                    messages.success(request, f'Successfully transferred ${amount}!')
+                    return redirect('send_money')
             
         except Exception as e:
-            connection.rollback()
             messages.error(request, f'Transfer failed: {str(e)}')
-            return redirect('send_money')
+        return redirect('send_money')
     
     # GET request
     accounts_query = """
