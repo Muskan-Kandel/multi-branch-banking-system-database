@@ -580,8 +580,8 @@ def transactions(request):
     
     account_filter = request.GET.get('account', '').strip()
     transaction_type = request.GET.get('type', '').strip()
-    date_from = request.GET.get('from_date').strip()
-    date_to = request.GET.get('to_date').strip()
+    date_from = request.GET.get('from_date', '').strip()
+    date_to = request.GET.get('to_date', '').strip()
     VALID_TRANSACTION_TYPES = ['deposit', 'withdraw', 'transfer']
 
     if transaction_type and transaction_type not in VALID_TRANSACTION_TYPES:
