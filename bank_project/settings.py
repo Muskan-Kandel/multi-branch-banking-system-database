@@ -95,7 +95,7 @@ else:
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': 'db_database',
             'USER': 'postgres',
-            'PASSWORD': 'your_local_password',
+            'PASSWORD': 'abhishek',
             'HOST': 'localhost',
             'PORT': '5432',
         }
@@ -152,9 +152,9 @@ LOGOUT_REDIRECT_URL = '/login/'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 
-
+#for the deployment on render.com 
 STORAGES = {
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage", # Removed 'Manifest'
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage", 
     },
 }
