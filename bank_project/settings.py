@@ -81,22 +81,21 @@ WSGI_APPLICATION = 'bank_project.wsgi.application'
 
 
 # Render automatically sets an environment variable called 'RENDER' when your code is running on their platform.
-if os.environ.get('RENDER'):
+# Look for a variable named DATABASE_URL. 
+# If it's not there, use the local machine settings.
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+if DATABASE_URL:
     DATABASES = {
-        'default': dj_database_url.parse(
-            'postgresql://default:bPdRk1CD3zKvWZso3x3nXAHFgktqZV6Q@dpg-d6bhvo6mcj7s73aj94v0-a.singapore-postgres.render.com/db_database_jfrf',
-            conn_max_age=600,
-            ssl_require=True
-        )
+        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600, ssl_require=True)
     }
 else:
-    # This part runs on your local computer
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': 'db_database',
             'USER': 'postgres',
-            'PASSWORD': 'abhishek',
+            'PASSWORD': 'your_local_password',
             'HOST': 'localhost',
             'PORT': '5432',
         }
