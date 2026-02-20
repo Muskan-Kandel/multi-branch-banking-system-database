@@ -23,9 +23,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-+3(0%=ut0b230spwom6gnmwl2lq_82fymryowwe_2uq-q3oz2+'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
+DEBUG = os.environ.get('RENDER', 'False') == 'False'
+ALLOWED_HOSTS = ['multi-branch-banking-system-database.onrender.com', 'localhost', '127.0.0.1']
 
 
 # Application definition
@@ -49,6 +48,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware'
 ]
 
 ROOT_URLCONF = 'bank_project.urls'
@@ -77,15 +77,20 @@ WSGI_APPLICATION = 'bank_project.wsgi.application'
 import os
 import dj_database_url
 
-if os.getenv('postgresql://default:bPdRk1CD3zKvWZso3x3nXAHFgktqZV6Q@dpg-d6bhvo6mcj7s73aj94v0-a.singapore-postgres.render.com/db_database_jfrf'):
+import os
+import dj_database_url
+
+# Render automatically sets an environment variable called 'RENDER' when your code is running on their platform.
+if os.environ.get('RENDER'):
     DATABASES = {
         'default': dj_database_url.parse(
-            os.getenv('postgresql://default:bPdRk1CD3zKvWZso3x3nXAHFgktqZV6Q@dpg-d6bhvo6mcj7s73aj94v0-a.singapore-postgres.render.com/db_database_jfrf'),
+            'postgresql://default:bPdRk1CD3zKvWZso3x3nXAHFgktqZV6Q@dpg-d6bhvo6mcj7s73aj94v0-a.singapore-postgres.render.com/db_database_jfrf',
             conn_max_age=600,
             ssl_require=True
         )
     }
 else:
+    # This part runs on your local computer
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -96,7 +101,6 @@ else:
             'PORT': '5432',
         }
     }
-
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
@@ -136,6 +140,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 STATICFILES_DIRS = [
     BASE_DIR / 'frontend' / 'static',
@@ -146,3 +151,11 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/login/'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+
+
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
