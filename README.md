@@ -10,7 +10,7 @@
 ![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=for-the-badge&logo=python&logoColor=white)
 
 
-#Hosted Application
+# Hosted Application
 
 ![Live Dmeo](https://multi-branch-banking-system-database.onrender.com) 
 
@@ -327,5 +327,6 @@ Contributions are welcome. Please follow the steps below:
 
 
 ---
+
 
 
