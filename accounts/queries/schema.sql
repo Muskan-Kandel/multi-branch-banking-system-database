@@ -112,3 +112,7 @@ CREATE TABLE beneficiary (
 ALTER TABLE customer
 ADD COLUMN failed_attempts INTEGER DEFAULT 0,
 ADD COLUMN locked_until TIMESTAMP NULL;
+
+--To delete ifsc column in beneficiary table
+ALTER TABLE beneficiary
+DROP column ifsc_code;
