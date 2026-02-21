@@ -93,9 +93,9 @@ else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'db_database',
+            'NAME': 'multibranch banking system ',
             'USER': 'postgres',
-            'PASSWORD': 'abhishek',
+            'PASSWORD': '3652',
             'HOST': 'localhost',
             'PORT': '5432',
         }
