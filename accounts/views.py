@@ -282,6 +282,7 @@ def dashboard(request):
         'recent_transactions': recent_transactions,
         'loans': loans,
         'account_count': len(accounts),
+
     }
     
     return render(request, 'dashboard.html', context)
@@ -370,7 +371,7 @@ def accounts(request):
                     with connection.cursor() as cursor:
                         cursor.execute(update_query, [amount, account_id, customer_id])
                         cursor.execute(transaction_query, [account_id, amount, description])
-                messages.success(request, f'Successfully deposited NPR{amount}!')
+                messages.success(request, f'Successfully deposited ${amount}!')
 
             except Exception as e:
                 messages.error(request, f'Deposit failed: {str(e)}')
@@ -418,7 +419,7 @@ def accounts(request):
                     with connection.cursor() as cursor:
                         cursor.execute(update_query, [amount, account_id, customer_id, amount])
                         cursor.execute(transaction_query, [account_id, amount, description])
-                messages.success(request, f'Successfully withdrawn NPR{amount}!')
+                messages.success(request, f'Successfully withdrawn ${amount}!')
             
             except Exception as e:
                 messages.error(request, f'Withdrawal failed: {str(e)}')
@@ -522,7 +523,7 @@ def send_money(request):
 
                     if cursor.rowcount == 0:
                         messages.error(request, 'Transfer failed: Recipient account not found or inactive!')
-                        return redirect('send money')
+                        return redirect('send_money')
                     
                     # Record sender's transaction
                     cursor.execute("""
@@ -536,12 +537,12 @@ def send_money(request):
                         VALUES (%s, 'deposit', %s, CURRENT_TIMESTAMP, %s)
                     """, [to_account_id, amount, f'Transfer from Account #{from_account_id}: {description}'])
                     
-                    messages.success(request, f'Successfully transferred NPR{amount}!')
-                    return redirect('send money')
+                    messages.success(request, f'Successfully transferred ${amount}!')
+                    return redirect('send_money')
             
         except Exception as e:
             messages.error(request, f'Transfer failed: {str(e)}')
-        return redirect('send money')
+        return redirect('send_money')
     
     # GET request
     accounts_query = """
@@ -686,9 +687,9 @@ def beneficiaries(request):
             name = request.POST.get('name').strip()
             account_number = request.POST.get('account_number').strip()
             bank_name = request.POST.get('bank_name').strip()
-            ifsc_code = request.POST.get('ifsc_code').strip().upper()
+            
 
-            if not all([name, account_number, bank_name, ifsc_code]):
+            if not all([name, account_number, bank_name]):
                 messages.error(request, 'All beneficiary fields are required!')
                 return redirect('beneficiaries')
             
@@ -696,10 +697,6 @@ def beneficiaries(request):
                 messages.error(request, 'Beneficiary name cannot exceed 100 characters!')
                 return redirect('beneficiaries')
             
-            #no need of ifsc code validation as we are not integrating with any external system, just checking length for basic validation
-            if len(ifsc_code) != 11:
-                messages.error(request, 'IFSC code must be exactly 11 characters!')
-                return redirect('beneficiaries')
             
             #check if beneficiary with same account number already exists for this customer
             existing_query = """
@@ -713,11 +710,11 @@ def beneficiaries(request):
 
             #insert new beneficiary
             query = """
-                INSERT INTO beneficiary (customer_id, name, account_number, bank_name, ifsc_code)
-                VALUES (%s, %s, %s, %s, %s)
+                INSERT INTO beneficiary (customer_id, name, account_number, bank_name)
+                VALUES (%s, %s, %s, %s)
             """
             try:
-                execute_query(query, [customer_id, name, account_number, bank_name, ifsc_code])
+                execute_query(query, [customer_id, name, account_number, bank_name])
                 messages.success(request, f'Beneficiary {name} added successfully!')
             except Exception as e:
                 messages.error(request, f'Error adding beneficiary: {str(e)}')
@@ -748,7 +745,7 @@ def beneficiaries(request):
     
     # GET request - display beneficiaries
     beneficiaries_query = """
-        SELECT id, name, account_number, bank_name, ifsc_code
+        SELECT id, name, account_number, bank_name
         FROM beneficiary
         WHERE customer_id = %s
         ORDER BY name
@@ -785,16 +782,16 @@ def profile_and_settings(request):
             messages.error(request, 'Invalid phone number!')
             return redirect('profile_and_settings')
         
-            query = """
-                UPDATE customer 
-                SET phone = %s, address = %s
-                WHERE user_id = %s
-            """
-            try:
-                execute_query(query, [phone, address, user_id])
-                messages.success(request, 'Profile updated successfully!')
-            except Exception as e:
-                messages.error(request, f'Error updating profile: {str(e)}')
+        query = """
+            UPDATE customer 
+            SET phone = %s, address = %s
+            WHERE user_id = %s
+        """
+        try:
+            execute_query(query, [phone, address, user_id])
+            messages.success(request, 'Profile updated successfully!')
+        except Exception as e:
+            messages.error(request, f'Error updating profile: {str(e)}')
         
         return redirect('profile_and_settings')
     
@@ -839,10 +836,7 @@ def profile_and_settings(request):
 
 
 
-def custom_logout(request):
-    logout(request)  # Logs out the user
-    messages.success(request, "Logout successful!")  # Set a Django message
-    return redirect('login')  # Redirect to login page
+
 
 
 
