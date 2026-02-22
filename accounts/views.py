@@ -760,6 +760,8 @@ def beneficiaries(request):
 # PROFILE AND SETTINGS
 # ============================================
 
+from django.contrib.auth import update_session_auth_hash
+
 @login_required
 def profile_and_settings(request):
     user_id = request.user.id
@@ -769,8 +771,53 @@ def profile_and_settings(request):
         
         # UPDATE PROFILE
         if action == 'update_profile':
-            phone = request.POST.get('phone','').strip()
-            address = request.POST.get('address','').strip()
+            phone = request.POST.get('phone', '').strip()
+            address = request.POST.get('address', '').strip()
+
+            if not phone and not address:
+                messages.error(request, 'Please provide at least one field to update!')
+                return redirect('profile and settings')
+            
+            if len(phone) > 15:
+                messages.error(request, 'Invalid phone number!')
+                return redirect('profile and settings')
+            
+            query = """
+                UPDATE customer 
+                SET phone = %s, address = %s
+                WHERE user_id = %s
+            """
+            try:
+                execute_query(query, [phone, address, user_id])
+                messages.success(request, 'Profile updated successfully!')
+            except Exception as e:
+                messages.error(request, f'Error updating profile: {str(e)}')
+            
+            return redirect('profile and settings')
+
+        # CHANGE PASSWORD
+        elif action == 'change_password':
+            current_password = request.POST.get('current_password')
+            new_password = request.POST.get('new_password')
+            confirm_password = request.POST.get('confirm_password')
+
+            if not request.user.check_password(current_password):
+                messages.error(request, 'Current password is incorrect!')
+                return redirect('profile and settings')
+
+            if new_password != confirm_password:
+                messages.error(request, 'New passwords do not match!')
+                return redirect('profile and settings')
+
+            if len(new_password) < 8:
+                messages.error(request, 'Password must be at least 8 characters!')
+                return redirect('profile and settings')
+
+            request.user.set_password(new_password)
+            request.user.save()
+            update_session_auth_hash(request, request.user)
+            messages.success(request, 'Password changed successfully!')
+            return redirect('profile and settings')
 
         if not phone and not address:
             messages.error(request, 'Please provide at least one field to update!')
@@ -803,7 +850,6 @@ def profile_and_settings(request):
     """
     customer = execute_single(customer_query, [user_id])
     
-    # Get account statistics
     stats_query = """
         SELECT 
             COUNT(*) as total_accounts,
@@ -815,7 +861,6 @@ def profile_and_settings(request):
     """
     stats = execute_single(stats_query, [customer['id']])
     
-    # Get transaction count
     transaction_count_query = """
         SELECT COUNT(*) as transaction_count
         FROM transaction t
@@ -918,3 +963,4 @@ def apply_loan(request):
     }
     
     return render(request, 'loan.html', context)
+

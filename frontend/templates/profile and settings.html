@@ -208,7 +208,7 @@
                         <div class="list-group-item px-0 d-flex justify-content-between align-items-center"> 
                             <div> <h6 class="mb-1">Password</h6> <small class="text-muted">••••••••</small> 
                             </div> 
-                            <button class="btn btn-outline-primary btn-sm" disabled> Change Password </button> 
+                            <button class="btn btn-sm" style="background-color:#0f024f; border-color:#0f024f; color:white;" data-bs-toggle="modal" data-bs-target="#changePasswordModal">Change Password</button>
                         </div> 
                         <div class="list-group-item px-0 d-flex justify-content-between align-items-center"> 
                             <div> <h6 class="mb-1">Two-Factor Authentication</h6> <small class="text-muted">Add an extra layer of security</small> 
@@ -299,5 +299,39 @@
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Change Password Modal -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header" style="background-color:#0f024f; color:white;">
+        <h5 class="modal-title"><i class="bi bi-lock me-2"></i>Change Password</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form method="POST" action="{% url 'profile and settings' %}">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="change_password">
+          
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Current Password</label>
+            <input type="password" class="form-control" name="current_password" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">New Password</label>
+            <input type="password" class="form-control" name="new_password" required minlength="8">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Confirm New Password</label>
+            <input type="password" class="form-control" name="confirm_password" required minlength="8">
+          </div>
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary" style="background-color:#0f024f; border-color:#0f024f; color:white;">Update Password</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
 
 {% endblock %}
