@@ -35,7 +35,6 @@
   100% { opacity: 0; }
 }
 
-/* Dashboard Buttons with Icons */
 .dashboard-buttons {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -76,16 +75,22 @@
 
   <!-- Account Summary -->
   <div class="row">
-    <div class="col-md-8 mt-4">
+    <div class="col-md-12 mt-4">
       <div class="card shadow-sm mb-3">
         <div class="card-header text-white" style="background-color:#0f024f;">
           Account Summary
         </div>
         <div class="card-body">
-          <h6 class="card-title mb-2">{{ user.username }}</h6>
-          <p class="mb-1"><strong>Account Number:</strong> {{ account.account_number }}</p>
-          <p class="mb-1"><strong>Account Type:</strong> {{ account.account_type }}</p>
-          <p class="mb-0"><strong>Available Balance:</strong> <span class="text-success fw-bold">NPR {{ account.balance }}</span></p>
+          <h6 class="card-title mb-2">{{ customer.username }}</h6>
+
+          {% with primary=accounts.0 %}
+          <p class="mb-1"><strong>Account Number:</strong> {{ primary.id }}</p>
+          <p class="mb-1"><strong>Account Type:</strong> {{ primary.account_type }}</p>
+          <p class="mb-0"><strong>Available Balance:</strong>
+            <span class="text-success fw-bold">NPR {{ total_balance }}</span>
+          </p>
+          {% endwith %}
+
         </div>
       </div>
 
@@ -128,9 +133,9 @@
               </tr>
             </thead>
             <tbody>
-              {% for tx in transactions %}
+              {% for tx in recent_transactions %}
               <tr>
-                <td>{{ tx.created_at|date:"d M" }}</td>
+                <td>{{ tx.timestamp|date:"d M" }}</td>
                 <td>{{ tx.description }}</td>
                 <td class="text-end
                   {% if tx.transaction_type == 'credit' %}
@@ -138,7 +143,7 @@
                   {% else %}
                     text-danger
                   {% endif %}">
-                  {{ tx.amount }}
+                  NPR {{ tx.amount }}
                 </td>
               </tr>
               {% empty %}

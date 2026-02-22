@@ -479,12 +479,12 @@ def send_money(request):
                 raise ValueError('Transfer amount must be positive!')
         except (ValueError, InvalidOperation) as e:
             messages.error(request, f'Invalid transfer amount: {str(e)}')
-            return redirect('send_money')
+            return redirect('send money')
         
         # Prevent transferring to the same account
         if str(from_account_id) == str(to_account_number):
             messages.error(request, 'Cannot transfer to the same account!')
-            return redirect('send_money')
+            return redirect('send money')
         
         try:
             with transaction.atomic():
@@ -499,7 +499,7 @@ def send_money(request):
                     recipient = cursor.fetchone()
                     if not recipient:
                         messages.error(request, 'Recipient account not found!')
-                        return redirect('send_money')
+                        return redirect('send money')
                     
                     to_account_id = recipient[0]
                     
@@ -512,7 +512,7 @@ def send_money(request):
                     
                     if cursor.rowcount == 0:
                         messages.error(request, 'Transfer failed due to insufficient balance or inactive account!')
-                        return redirect('send_money')
+                        return redirect('send money')
                     
                     # Add to recipient
                     cursor.execute("""
@@ -523,7 +523,7 @@ def send_money(request):
 
                     if cursor.rowcount == 0:
                         messages.error(request, 'Transfer failed: Recipient account not found or inactive!')
-                        return redirect('send_money')
+                        return redirect('send money')
                     
                     # Record sender's transaction
                     cursor.execute("""
@@ -537,12 +537,12 @@ def send_money(request):
                         VALUES (%s, 'deposit', %s, CURRENT_TIMESTAMP, %s)
                     """, [to_account_id, amount, f'Transfer from Account #{from_account_id}: {description}'])
                     
-                    messages.success(request, f'Successfully transferred ${amount}!')
-                    return redirect('send_money')
+                    messages.success(request, f'Successfully transferred NPR{amount} !')
+                    return redirect('send money')
             
         except Exception as e:
             messages.error(request, f'Transfer failed: {str(e)}')
-        return redirect('send_money')
+        return redirect('send money')
     
     # GET request
     accounts_query = """
@@ -833,6 +833,14 @@ def profile_and_settings(request):
     }
     
     return render(request, 'profile and settings.html', context)
+
+from django.contrib.auth import logout
+from django.shortcuts import redirect
+
+def custom_logout(request):
+    logout(request)
+    return redirect('login')
+
 
 
 

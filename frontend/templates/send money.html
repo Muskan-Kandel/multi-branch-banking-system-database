@@ -233,7 +233,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const toAccount = document.getElementById('toAccount').value;
-        const confirmMsg = `Are you sure you want to transfer NPR${amount.toFixed(2)} to Account #NPR${toAccount}?`;
+        const confirmMsg = `Are you sure you want to transfer NPR ${amount.toFixed(2)} to Account #${toAccount}?`;
         if (!confirm(confirmMsg)) {
             e.preventDefault();
             return false;
