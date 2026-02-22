@@ -13,39 +13,31 @@ from django.db import transaction
 
 def execute_query(query, params=None):
     """Execute a query and return results for SELECT statements"""
-    cursor = connection.cursor()
-    try:
-        cursor.execute(query, params or [])
-        if query.strip().upper().startswith('SELECT'):
-            columns = [col[0] for col in cursor.description]
-            results = [dict(zip(columns, row)) for row in cursor.fetchall()]
-            return results
-        connection.commit()
-        return None
-    except Exception as e:
-        print(f"Database Error: {e}")
-        connection.rollback()
-        raise e
-    finally:
-        cursor.close()
+    with connection.cursor() as cursor:
+        try:
+            cursor.execute(query, params or [])
+            if query.strip().upper().startswith('SELECT'):
+                columns = [col[0] for col in cursor.description]
+                results = [dict(zip(columns, row)) for row in cursor.fetchall()]
+                return results
+            return None
+        except Exception as e:
+            print(f"Database Error: {e}")
+            raise e
 
 def execute_single(query, params=None):
     """Execute query and return single row"""
-    cursor = connection.cursor()
-    try:
-        cursor.execute(query, params or [])
-        if query.strip().upper().startswith('SELECT'):
-            columns = [col[0] for col in cursor.description]
-            row = cursor.fetchone()
-            return dict(zip(columns, row)) if row else None
-        connection.commit()
-        return None
-    except Exception as e:
-        print(f"Database Error: {e}")
-        connection.rollback()
-        raise e
-    finally:
-        cursor.close()
+    with connection.cursor() as cursor:
+        try:
+            cursor.execute(query, params or [])
+            if query.strip().upper().startswith('SELECT'):
+                columns = [col[0] for col in cursor.description]
+                row = cursor.fetchone()
+                return dict(zip(columns, row)) if row else None
+            return None
+        except Exception as e:
+            print(f"Database Error: {e}")
+            raise e
 
 
 
@@ -281,6 +273,7 @@ def dashboard(request):
         'total_balance': total_balance,
         'recent_transactions': recent_transactions,
         'account_count': len(accounts),
+        'my_loans': my_loans,
     }
     
     return render(request, 'dashboard.html', context)
@@ -937,8 +930,8 @@ def apply_loan(request):
             messages.success(request, 'Loan application submitted successfully! Status: Pending')
         except Exception as e:
             messages.error(request, f'Error applying for loan: {str(e)}')
-            
-        return redirect('loan')
+         
+        return redirect('loan')   
     
     # GET request - display loan application form
     branches_query = """
