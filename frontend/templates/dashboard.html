@@ -72,17 +72,16 @@
 {% block content %}
 
 <div class="container">
-
-  <!-- Account Summary -->
   <div class="row">
     <div class="col-md-12 mt-4">
+
+      <!-- Account Summary -->
       <div class="card shadow-sm mb-3">
         <div class="card-header text-white" style="background-color:#0f024f;">
           Account Summary
         </div>
         <div class="card-body">
           <h6 class="card-title mb-2">{{ customer.username }}</h6>
-
           {% with primary=accounts.0 %}
           <p class="mb-1"><strong>Account Number:</strong> {{ primary.id }}</p>
           <p class="mb-1"><strong>Account Type:</strong> {{ primary.account_type }}</p>
@@ -90,7 +89,6 @@
             <span class="text-success fw-bold">NPR {{ total_balance }}</span>
           </p>
           {% endwith %}
-
         </div>
       </div>
 
@@ -112,12 +110,10 @@
           <i class="bi bi-people"></i>
           Beneficiary
         </a>
-
-       <a href="{% url 'loan' %}">
-        <i class="bi bi-bank"></i>
-        Loans
-        </a> 
-
+        <a href="{% url 'loan' %}">
+          <i class="bi bi-bank"></i>
+          Loans
+        </a>
         <a href="{% url 'profile and settings' %}">
           <i class="bi bi-person-circle"></i>
           Profile
@@ -126,7 +122,7 @@
 
       <!-- Recent Transactions -->
       <div class="card shadow-sm">
-        <div class="card-header" style="background-color:#0f024f;color:white;">
+        <div class="card-header text-white" style="background-color:#0f024f;">
           Recent Transactions
         </div>
         <div class="card-body p-0">
@@ -143,12 +139,7 @@
               <tr>
                 <td>{{ tx.timestamp|date:"d M" }}</td>
                 <td>{{ tx.description }}</td>
-                <td class="text-end
-                  {% if tx.transaction_type == 'credit' %}
-                    text-success
-                  {% else %}
-                    text-danger
-                  {% endif %}">
+                <td class="text-end {% if tx.transaction_type == 'credit' %}text-success{% else %}text-danger{% endif %}">
                   NPR {{ tx.amount }}
                 </td>
               </tr>
@@ -162,6 +153,41 @@
         </div>
       </div>
 
+      <!-- Active Loans -->
+      {% if my_loans %}
+      <div class="card shadow-sm mt-3">
+        <div class="card-header text-white" style="background-color:#0f024f;">
+          Active Loans
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-sm mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Amount</th>
+                <th>Interest Rate</th>
+                <th>End Date</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for loan in my_loans %}
+              <tr>
+                <td>NPR {{ loan.amount }}</td>
+                <td>{{ loan.interest_rate }}%</td>
+                <td>{{ loan.end_date }}</td>
+                <td>
+                  <span class="badge {% if loan.status == 'approved' %}bg-success{% else %}bg-warning text-dark{% endif %}">
+                    {{ loan.status|capfirst }}
+                  </span>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endif %}
+
       <!-- Image Slideshow -->
       <div class="mt-3 px-0 mx-0">
         <div class="image-slideshow w-100">
@@ -174,4 +200,4 @@
   </div>
 </div>
 
-{% endblock %}
+{% endblock %}  
