@@ -273,16 +273,14 @@ def dashboard(request):
         WHERE l.customer_id = %s AND l.status IN ('pending', 'approved')
         ORDER BY l.start_date DESC
     """
-    loans = execute_query(loans_query, [customer_id])
+    my_loans = execute_query(loans_query, [customer_id])
     
     context = {
         'customer': customer,
         'accounts': accounts,
         'total_balance': total_balance,
         'recent_transactions': recent_transactions,
-        'loans': loans,
         'account_count': len(accounts),
-
     }
     
     return render(request, 'dashboard.html', context)
@@ -537,7 +535,7 @@ def send_money(request):
                         VALUES (%s, 'deposit', %s, CURRENT_TIMESTAMP, %s)
                     """, [to_account_id, amount, f'Transfer from Account #{from_account_id}: {description}'])
                     
-                    messages.success(request, f'Successfully transferred NPR{amount} !')
+                    messages.success(request, f'Successfully transferred NPR{amount}!')
                     return redirect('send money')
             
         except Exception as e:
@@ -776,11 +774,11 @@ def profile_and_settings(request):
 
         if not phone and not address:
             messages.error(request, 'Please provide at least one field to update!')
-            return redirect('profile_and_settings')
+            return redirect('profile and settings')
         
         if len(phone) > 15:
             messages.error(request, 'Invalid phone number!')
-            return redirect('profile_and_settings')
+            return redirect('profile and settings')
         
         query = """
             UPDATE customer 
@@ -793,7 +791,7 @@ def profile_and_settings(request):
         except Exception as e:
             messages.error(request, f'Error updating profile: {str(e)}')
         
-        return redirect('profile_and_settings')
+        return redirect('profile and settings')
     
     # GET request
     customer_query = """
@@ -834,17 +832,89 @@ def profile_and_settings(request):
     
     return render(request, 'profile and settings.html', context)
 
-from django.contrib.auth import logout
-from django.shortcuts import redirect
+# ============================================
+# LOAN APPLICATION
+# ============================================
 
-def custom_logout(request):
-    logout(request)
-    return redirect('login')
+@login_required
+def apply_loan(request):
+    user_id = request.user.id
+    
+    # Get customer ID
+    customer_query = """
+        SELECT id FROM customer 
+        WHERE user_id = %s
+    """
+    customer = execute_single(customer_query, [user_id])
 
+    # Customer account check
+    if not customer:
+        messages.error(request, 'Customer profile not found!')
+        return redirect('login')
+    customer_id = customer['id']
 
+    if request.method == 'POST':
+        amount = request.POST.get('amount')
+        interest_rate = request.POST.get('interest_rate')
+        branch_id = request.POST.get('branch_id')
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
 
+        # Validate amount and interest rate
+        try:
+            amount = Decimal(amount)
+            interest_rate = Decimal(interest_rate)
 
+            if amount <= 0 or interest_rate <= 0:
+                raise ValueError('All fields must be positive numbers!')
+        except (ValueError, InvalidOperation) as e:
+            messages.error(request, f'Invalid input: {str(e)}')
+            return redirect('loan')
+        
+        #Validate dates
+        try:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+            end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+            if start_date >= end_date:
+                raise ValueError('End date must be after start date!')
+            if start_date < date.today():
+                raise ValueError('Start date must be in the future!')
+        except ValueError as e:
+            messages.error(request, f'Invalid date format : {str(e)}')
+            return redirect('loan')
 
+        query = """
+            INSERT INTO loan (customer_id, branch_id, amount, interest_rate, start_date, end_date, status)
+            VALUES (%s, %s, %s, %s, %s, %s, 'pending')
+        """
+        try:
+            execute_query(query, [customer_id, branch_id or None, amount, interest_rate, start_date, end_date])
+            messages.success(request, 'Loan application submitted successfully! Status: Pending')
+        except Exception as e:
+            messages.error(request, f'Error applying for loan: {str(e)}')
+            
+        return redirect('loan')
+    
+    # GET request - display loan application form
+    branches_query = """
+        SELECT id, name, address FROM branch 
+        ORDER BY name"""
+    branches = execute_query(branches_query)
 
-
-
+    # Get existing loans for display
+    loans_query = """
+        SELECT l.id, l.amount, l.interest_rate, l.start_date, l.end_date, l.status,
+               b.name as branch_name
+        FROM loan l
+        LEFT JOIN branch b ON l.branch_id = b.id
+        WHERE l.customer_id = %s
+        ORDER BY l.start_date DESC
+    """
+    my_loans = execute_query(loans_query, [customer_id])
+    
+    context = {
+        'branches': branches,
+        'my_loans': my_loans,
+    }
+    
+    return render(request, 'loan.html', context)

@@ -115,4 +115,4 @@ ADD COLUMN locked_until TIMESTAMP NULL;
 
 --To delete ifsc column in beneficiary table
 ALTER TABLE beneficiary
-DROP column ifsc_code;
+DROP column ifsc_code;*
