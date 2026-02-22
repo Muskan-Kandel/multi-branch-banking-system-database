@@ -869,7 +869,7 @@ def apply_loan(request):
                 raise ValueError('All fields must be positive numbers!')
         except (ValueError, InvalidOperation) as e:
             messages.error(request, f'Invalid input: {str(e)}')
-            return redirect('loan')
+            return redirect('loan.html')
         
         #Validate dates
         try:
@@ -881,7 +881,7 @@ def apply_loan(request):
                 raise ValueError('Start date must be in the future!')
         except ValueError as e:
             messages.error(request, f'Invalid date format : {str(e)}')
-            return redirect('loan')
+            return redirect('loan.html')
 
         query = """
             INSERT INTO loan (customer_id, branch_id, amount, interest_rate, start_date, end_date, status)
@@ -893,7 +893,7 @@ def apply_loan(request):
         except Exception as e:
             messages.error(request, f'Error applying for loan: {str(e)}')
             
-        return redirect('loan')
+        return redirect('loan.html')
     
     # GET request - display loan application form
     branches_query = """
