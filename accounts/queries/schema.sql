@@ -116,3 +116,15 @@ ADD COLUMN locked_until TIMESTAMP NULL;
 --To delete ifsc column in beneficiary table
 ALTER TABLE beneficiary
 DROP column ifsc_code;*
+
+--Inserting sample data into branch table
+INSERT INTO branch (name, address, contact_number) VALUES 
+('Kathmandu Main Branch', 'New Road, Kathmandu', '01-4567890'),
+('Pokhara Branch', 'Lakeside, Pokhara', '061-234567'),
+('Lalitpur Branch', 'Pulchowk, Lalitpur', '01-5234567'),
+('Bharatpur Branch', 'Narayangadh, Bharatpur', '056-234567'),
+('Biratnagar Branch', 'Traffic Chowk, Biratnagar', '021-234567'),
+('Birgunj Branch', 'Ghantaghar, Birgunj', '051-234567'),
+('Butwal Branch', 'Traffic Chowk, Butwal', '071-234567'),
+('Dharan Branch', 'BP Chowk, Dharan', '025-234567'),
+('Hetauda Branch', 'Hetauda Bazaar, Hetauda', '057-234567');

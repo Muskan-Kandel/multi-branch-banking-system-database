@@ -961,6 +961,13 @@ def apply_loan(request):
         'branches': branches,
         'my_loans': my_loans,
     }
+
+    branches_query = "SELECT id, name, address FROM branch ORDER BY name"
+    branches = execute_query(branches_query)
+    print("BRANCHES DEBUG:", branches)
     
     return render(request, 'loan.html', context)
+
+
+
 
