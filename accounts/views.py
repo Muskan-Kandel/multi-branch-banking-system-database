@@ -370,7 +370,7 @@ def accounts(request):
                     with connection.cursor() as cursor:
                         cursor.execute(update_query, [amount, account_id, customer_id])
                         cursor.execute(transaction_query, [account_id, amount, description])
-                messages.success(request, f'Successfully deposited ${amount}!')
+                messages.success(request, f'Successfully deposited NPR{amount}!')
 
             except Exception as e:
                 messages.error(request, f'Deposit failed: {str(e)}')
@@ -418,7 +418,7 @@ def accounts(request):
                     with connection.cursor() as cursor:
                         cursor.execute(update_query, [amount, account_id, customer_id, amount])
                         cursor.execute(transaction_query, [account_id, amount, description])
-                messages.success(request, f'Successfully withdrawn ${amount}!')
+                messages.success(request, f'Successfully withdrawn NPR{amount}!')
             
             except Exception as e:
                 messages.error(request, f'Withdrawal failed: {str(e)}')
@@ -453,7 +453,7 @@ def accounts(request):
 
 @login_required
 def send_money(request):
-    user_id = request.user.id
+    user_id = new_func(request)
     
     # Get customer ID
     customer_query = "SELECT id FROM customer WHERE user_id = %s"
@@ -556,6 +556,10 @@ def send_money(request):
     }
     
     return render(request, 'send money.html', context)
+
+def new_func(request):
+    user_id = request.user.id
+    return user_id
 
 # ============================================
 # TRANSACTIONS HISTORY

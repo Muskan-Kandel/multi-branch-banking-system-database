@@ -7,7 +7,7 @@
 /* Full height split layout */
 .accounts-container {
     display: flex;
-    min-height: 70vh; /* Adjust height as needed */
+    min-height: 70vh;
     gap: 20px;
 }
 
@@ -22,7 +22,7 @@
 
 /* Right content section */
 .accounts-right {
-    flex: 1.5; /* slightly wider */
+    flex: 1.5;
 }
 
 /* Buttons navy blue */
@@ -104,7 +104,7 @@
                                     <h6 class="mb-3">#{{ account.id }}</h6>
 
                                     <p class="text-muted mb-1 small">Current Balance</p>
-                                    <h3 class="mb-3 fw-bold">NPR{{ account.balance }}</h3>
+                                    <h3 class="mb-3 fw-bold">NPR {{ account.balance }}</h3>
 
                                     {% if account.branch_name %}
                                         <p class="text-muted mb-1 small">Branch</p>
@@ -129,6 +129,85 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- ====== DEPOSIT MODAL for account {{ account.id }} ====== -->
+                        <div class="modal fade" id="depositModal{{ account.id }}" tabindex="-1" aria-labelledby="depositModalLabel{{ account.id }}" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="depositModalLabel{{ account.id }}">
+                                            <i class="bi bi-plus-circle text-success me-2"></i>Deposit to #{{ account.id }} ({{ account.account_type|title }})
+                                        </h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <form method="POST" action="{% url 'accounts' %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="deposit">
+                                        <input type="hidden" name="account_id" value="{{ account.id }}">
+                                        <div class="modal-body">
+                                            <p class="text-muted small mb-3">Current Balance: <strong>NPR {{ account.balance }}</strong></p>
+                                            <div class="mb-3">
+                                                <label class="form-label">Amount</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">NPR</span>
+                                                    <input type="number" class="form-control" name="amount" step="0.01" min="0.01" placeholder="0.00" required>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Description (optional)</label>
+                                                <input type="text" class="form-control" name="description" placeholder="Deposit" maxlength="255">
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-success">
+                                                <i class="bi bi-check-circle me-1"></i>Deposit
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ====== WITHDRAW MODAL for account {{ account.id }} ====== -->
+                        <div class="modal fade" id="withdrawModal{{ account.id }}" tabindex="-1" aria-labelledby="withdrawModalLabel{{ account.id }}" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="withdrawModalLabel{{ account.id }}">
+                                            <i class="bi bi-dash-circle text-danger me-2"></i>Withdraw from #{{ account.id }} ({{ account.account_type|title }})
+                                        </h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <form method="POST" action="{% url 'accounts' %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="withdraw">
+                                        <input type="hidden" name="account_id" value="{{ account.id }}">
+                                        <div class="modal-body">
+                                            <p class="text-muted small mb-3">Current Balance: <strong>NPR {{ account.balance }}</strong></p>
+                                            <div class="mb-3">
+                                                <label class="form-label">Amount</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">NPR</span>
+                                                    <input type="number" class="form-control" name="amount" step="0.01" min="0.01" max="{{ account.balance }}" placeholder="0.00" required>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Description (optional)</label>
+                                                <input type="text" class="form-control" name="description" placeholder="Withdrawal" maxlength="255">
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-danger">
+                                                <i class="bi bi-check-circle me-1"></i>Withdraw
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
                     {% endfor %}
                 </div>
             {% else %}
