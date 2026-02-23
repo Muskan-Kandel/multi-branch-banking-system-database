@@ -23,7 +23,7 @@ urlpatterns = [
     path('profile and settings/', views.profile_and_settings, name='profile and settings'),
     path('logout/', views.logout, name='logout'),
     path('loan/', views.apply_loan, name='loan'),
-
+    path('loan/cancel/<int:loan_id>/', views.cancel_loan, name='cancel_loan'),
 
 
 ]

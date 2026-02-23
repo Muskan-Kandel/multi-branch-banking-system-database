@@ -128,3 +128,6 @@ INSERT INTO branch (name, address, contact_number) VALUES
 ('Butwal Branch', 'Traffic Chowk, Butwal', '071-234567'),
 ('Dharan Branch', 'BP Chowk, Dharan', '025-234567'),
 ('Hetauda Branch', 'Hetauda Bazaar, Hetauda', '057-234567');
+
+-- Adding interest rate column to branch table for fixed interest loans
+ALTER TABLE branch ADD COLUMN interest_rate DECIMAL(5,2) NOT NULL DEFAULT 12.00;

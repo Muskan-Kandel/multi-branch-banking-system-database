@@ -117,34 +117,33 @@
                 <div class="card-body">
                     <form method="post">
                         {% csrf_token %}
+    
                         <div class="mb-3">
                             <label class="form-label">Branch</label>
                             <select name="branch_id" class="form-select" required>
                                 <option value="">— Select Branch —</option>
                                 {% for branch in branches %}
-                                <option value="{{ branch.id }}">{{ branch.name }}</option>
+                                <option value="{{ branch.id }}">{{ branch.name }} — 12% per year</option>
                                 {% endfor %}
                             </select>
+                            <small class="text-muted">Interest rate is fixed at 12% per year.</small>
                         </div>
+
+                        <!-- amount -->
                         <div class="mb-3">
                             <label class="form-label">Loan Amount (NPR)</label>
-                            <input type="number" class="form-control" name="amount" placeholder= "e.g. 7000000" min="1000" required>
+                            <input type="number" class="form-control" name="amount" placeholder="e.g. 500000" min="1000" required>
                         </div>
 
-                    <div class="mb-3">
-                            <label class="form-label">interest Rate (% per year)</label>
-                            <input type="number" class="form-control" name="interest_rate" placeholder="e.g. 12.5" min="0.01" max="100" step="0.01" required>
-                    </div>
+                        <div class="mb-3">
+                            <label class="form-label">Start Date</label>
+                            <input type="date" name="start_date" class="form-control" required>
+                        </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Start Date</label>
-                        <input type="date" name="start_date" class="form-control" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">End Date</label>
-                        <input type="date" name="end_date" class="form-control" required>
-                    </div>
+                        <div class="mb-3">
+                            <label class="form-label">End Date</label>
+                            <input type="date" name="end_date" class="form-control" required>
+                        </div>
 
                     <button type="submit" class="btn w-100 text-white" style="background-color:#0f024f;">Apply for Loan</button>
                     </form>
@@ -152,54 +151,62 @@
             </div>
         </div>
 
-    <div class="col-md-7">
-      <div class="card shadow-sm">
-        <div class="card-header text-white" style="background-color:#0f024f;">
-          My Loan Applications
+        <div class="col-md-7">
+            <div class="card shadow-sm">
+                <div class="card-header text-white" style="background-color:#0f024f;">
+                My Loan Applications
+                </div>
+                <div class="card-body p-0">
+                <table class="table table-sm table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Amount</th>
+                            <th>Rate</th>
+                            <th>Start</th>
+                            <th>End</th>
+                            <th>Branch</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for loan in my_loans %}
+                    <tr>
+                        <td>NPR {{ loan.amount }}</td>
+                        <td>{{ loan.interest_rate }}%</td>
+                        <td>{{ loan.start_date }}</td>
+                        <td>{{ loan.end_date }}</td>
+                        <td>{{ loan.branch_name|default:"—" }}</td>
+                        <td>
+                            <span class="badge
+                                {% if loan.status == 'approved' %}bg-success
+                                {% elif loan.status == 'pending' %}bg-warning text-dark
+                                {% elif loan.status == 'rejected' %}bg-danger
+                                {% else %}bg-secondary{% endif %}">
+                                {{ loan.status|capfirst }}
+                            </span>
+                    
+                        <!-- delete button for loan application if pending -->
+                            {% if loan.status == 'pending' %}
+                            <a href="{% url 'cancel_loan' loan.id %}"class="btn btn-sm btn-outline-danger" 
+                            onclick="return confirm('Cancel this loan application?')">
+                            Cancel
+                            </a>
+                            {% endif %}
+               
+                        </td>                
+                    </tr>
+                     {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-3">No loan applications yet.</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+
         </div>
-        <div class="card-body p-0">
-          <table class="table table-sm table-hover mb-0">
-            <thead class="table-light">
-              <tr>
-                <th>Amount</th>
-                <th>Rate</th>
-                <th>Start</th>
-                <th>End</th>
-                <th>Branch</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for loan in my_loans %}
-              <tr>
-                <td>NPR {{ loan.amount }}</td>
-                <td>{{ loan.interest_rate }}%</td>
-                <td>{{ loan.start_date }}</td>
-                <td>{{ loan.end_date }}</td>
-                <td>{{ loan.branch_name|default:"—" }}</td>
-                <td>
-                  <span class="badge
-                    {% if loan.status == 'approved' %}bg-success
-                    {% elif loan.status == 'pending' %}bg-warning text-dark
-                    {% elif loan.status == 'rejected' %}bg-danger
-                    {% else %}bg-secondary{% endif %}">
-                    {{ loan.status|capfirst }}
-                  </span>
-                </td>
-              </tr>
-              {% empty %}
-              <tr>
-                <td colspan="6" class="text-center text-muted py-3">No loan applications yet.</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
     </div>
-
-  </div>
-
 </div>
 
 {% endblock %}

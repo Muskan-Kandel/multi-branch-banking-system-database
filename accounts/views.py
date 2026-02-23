@@ -9,35 +9,44 @@ from decimal import Decimal, InvalidOperation
 from datetime import date, datetime
 from django.contrib.auth.models import User
 from django.db import transaction
+from dateutil.relativedelta import relativedelta
 
 
 def execute_query(query, params=None):
     """Execute a query and return results for SELECT statements"""
-    with connection.cursor() as cursor:
-        try:
-            cursor.execute(query, params or [])
-            if query.strip().upper().startswith('SELECT'):
-                columns = [col[0] for col in cursor.description]
-                results = [dict(zip(columns, row)) for row in cursor.fetchall()]
-                return results
-            return None
-        except Exception as e:
-            print(f"Database Error: {e}")
-            raise e
+    cursor = connection.cursor()
+    try:
+        cursor.execute(query, params or [])
+        if query.strip().upper().startswith('SELECT'):
+            columns = [col[0] for col in cursor.description]
+            results = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            return results
+        connection.commit()
+        return None
+    except Exception as e:
+        print(f"Database Error: {e}")
+        connection.rollback()
+        raise e
+    finally:
+        cursor.close()
 
 def execute_single(query, params=None):
     """Execute query and return single row"""
-    with connection.cursor() as cursor:
-        try:
-            cursor.execute(query, params or [])
-            if query.strip().upper().startswith('SELECT'):
-                columns = [col[0] for col in cursor.description]
-                row = cursor.fetchone()
-                return dict(zip(columns, row)) if row else None
-            return None
-        except Exception as e:
-            print(f"Database Error: {e}")
-            raise e
+    cursor = connection.cursor()
+    try:
+        cursor.execute(query, params or [])
+        if query.strip().upper().startswith('SELECT'):
+            columns = [col[0] for col in cursor.description]
+            row = cursor.fetchone()
+            return dict(zip(columns, row)) if row else None
+        connection.commit()
+        return None
+    except Exception as e:
+        print(f"Database Error: {e}")
+        connection.rollback()
+        raise e
+    finally:
+        cursor.close()
 
 
 
@@ -273,7 +282,6 @@ def dashboard(request):
         'total_balance': total_balance,
         'recent_transactions': recent_transactions,
         'account_count': len(accounts),
-        'my_loans': my_loans,
     }
     
     return render(request, 'dashboard.html', context)
@@ -893,17 +901,33 @@ def apply_loan(request):
 
     if request.method == 'POST':
         amount = request.POST.get('amount')
-        interest_rate = request.POST.get('interest_rate')
         branch_id = request.POST.get('branch_id')
+        branch = execute_single("SELECT id, interest_rate FROM branch WHERE id = %s", [branch_id])
+        interest_rate = Decimal('12.00')  # Default interest rate
         start_date = request.POST.get('start_date')
         end_date = request.POST.get('end_date')
+        
+
+        #Branch validation
+        if not branch:
+            messages.error(request, 'Invalid branch selected!')
+            return redirect('loan')
+        
+        #Check for loan eligibility based on if they already have a loan
+        existing = execute_single("""
+            SELECT COUNT(*) as count FROM loan 
+            WHERE customer_id = %s AND status IN ('pending', 'approved')
+        """, [customer_id])
+
+        if existing and existing['count'] > 0:
+            messages.error(request, 'You already have an active or pending loan application!')
+            return redirect('loan')
 
         # Validate amount and interest rate
         try:
             amount = Decimal(amount)
-            interest_rate = Decimal(interest_rate)
-
-            if amount <= 0 or interest_rate <= 0:
+        
+            if amount <= 0:
                 raise ValueError('All fields must be positive numbers!')
         except (ValueError, InvalidOperation) as e:
             messages.error(request, f'Invalid input: {str(e)}')
@@ -921,18 +945,68 @@ def apply_loan(request):
             messages.error(request, f'Invalid date format : {str(e)}')
             return redirect('loan')
 
+        #calculate loan term in months using dateutil.relativedelta
+        delta = relativedelta(end_date, start_date)
+        total_months = delta.years * 12 + delta.months 
+
+        #get customer's total balance 
+        balance_result = execute_single("""
+        SELECT COALESCE(SUM(balance), 0) as total 
+        FROM account 
+        WHERE customer_id = %s AND is_active = 'true' """, [customer_id])
+        account_balance = Decimal(str(balance_result['total']))
+
+        if not balance_result or balance_result['total'] is None:
+            account_balance = Decimal('0')
+        else:
+            account_balance = Decimal(str(balance_result['total']))
+
+        
+        #loan decision logic
+        status = 'pending'
+        rejection_reason = None
+
+        if account_balance < Decimal('10000'):
+            status = 'rejected'
+            rejection_reason = 'Minimum account balance of NPR 10,000 required for loan eligibility.'
+        
+        elif amount > account_balance * 10:
+            status = 'rejected'
+            rejection_reason = 'Loan amount cannot exceed 10x your account balance.'
+
+        elif total_months > 60:
+            status = 'rejected'
+            rejection_reason = 'Loan term cannot exceed 60 months (5 years).'
+
+        elif total_months < 3:
+            status = 'rejected'
+            rejection_reason = 'Loan term must be at least 3 months.'
+
+        elif amount <= Decimal('500000') and account_balance >= Decimal('50000'):
+            status = 'approved'
+
+        #medium loan and customer has atleast 20% of loan amount in account balance
+        elif amount <= Decimal('2000000') and account_balance >= amount * Decimal('0.2'):
+            status = 'approved'
+
+        else:
+            status = 'pending'
+
+        if status == 'rejected':
+            messages.error(request, f"Application Rejected: {rejection_reason}")
+            return redirect('loan')
+    
         query = """
             INSERT INTO loan (customer_id, branch_id, amount, interest_rate, start_date, end_date, status)
-            VALUES (%s, %s, %s, %s, %s, %s, 'pending')
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
         """
         try:
-            execute_query(query, [customer_id, branch_id or None, amount, interest_rate, start_date, end_date])
-            messages.success(request, 'Loan application submitted successfully! Status: Pending')
+            execute_query(query, [customer_id, branch_id or None, amount, interest_rate, start_date, end_date, status])
+            messages.success(request, f'Loan application submitted successfully! Status: {status}')
         except Exception as e:
             messages.error(request, f'Error applying for loan: {str(e)}')
-         
-        return redirect('loan')   
-    
+        return redirect('loan')
+     
     # GET request - display loan application form
     branches_query = """
         SELECT id, name, address FROM branch 
@@ -948,6 +1022,7 @@ def apply_loan(request):
         WHERE l.customer_id = %s
         ORDER BY l.start_date DESC
     """
+    
     my_loans = execute_query(loans_query, [customer_id])
     
     context = {
@@ -955,11 +1030,32 @@ def apply_loan(request):
         'my_loans': my_loans,
     }
 
-    branches_query = "SELECT id, name, address FROM branch ORDER BY name"
-    branches = execute_query(branches_query)
-    print("BRANCHES DEBUG:", branches)
-    
     return render(request, 'loan.html', context)
+
+# ============================================
+# CANCEL LOAN APPLICATION
+# ============================================
+
+@login_required
+def cancel_loan(request, loan_id):
+    user_id = request.user.id
+
+    customer = execute_single("SELECT id FROM customer WHERE user_id = %s", [user_id])
+    if not customer:
+        return redirect('login')
+
+    loan = execute_single("""
+        SELECT id FROM loan 
+        WHERE id = %s AND customer_id = %s AND status = 'pending'
+    """, [loan_id, customer['id']])
+
+    if not loan:
+        messages.error(request, 'Loan not found or cannot be cancelled!')
+        return redirect('loan')
+
+    execute_query("DELETE FROM loan WHERE id = %s", [loan_id])
+    messages.success(request, 'Loan application cancelled successfully!')
+    return redirect('loan')
 
 
 
