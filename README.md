@@ -88,6 +88,18 @@ From account creation to cross-branch money transfers, all operations are handle
 - **IFSC Validation** — Basic format checking for bank codes
 - **Duplicate Prevention** — Prevents adding the same account number more than once
 
+### Loan Eligibility and Validation
+- **Single Active Application** — Restricts users to one active or pending loan at a time to prevent over-leveraging.
+- **Account Balance Verification** — Requires a minimum total balance (e.g. NPR 10,000) across all active accounts for eligibility.
+- **Loan-to-Balance Ratio** — Limits the requested loan amount to a maximum of 10x the user's current total account balance.
+- **Terms Constraints** — Enforces a repayment window between a minimum of 3 months and a maximum of 60 months (5 years).
+
+### Automated Decision Engine
+- **Instant Approval** — Automatically approves loans up to 500,000 if the user maintains a healthy minimum balance.
+- **Proportional Approval** — Grants automatic approval for larger loans (up to 2000000) if the user holds at least 20% of the loan value in their accounts.
+- **Smart Rejection** — Provides specific feedback and reasons if an application is rejected based on balance or term limits.
+- **Pending Review** — Routes complex applications that fall outside "Instant Approval" parameters to a manual review status.
+
 ### Profile and Settings
 - **Profile Updates** — Update phone number and address
 - **Account Statistics** — View total balance, account counts, and transaction totals
@@ -244,7 +256,10 @@ Multi-Branch-Banking-System-DataBase/
 │   │   ├── base.html                 # Base layout
 │   │   ├── login.html                # Login page
 │   │   ├── register.html             # Registration page
-│   │   ├── dashboard.html            # Customer dashboard
+│   │   ├── dashboard.html            # Customer 
+│   │   ├── loan.html                 # Loan 
+
+dashboard
 │   │   ├── accounts.html             # Account management
 │   │   ├── send money.html           # Transfer page
 │   │   ├── transactions.html         # Transaction history
