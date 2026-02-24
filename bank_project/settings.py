@@ -95,7 +95,7 @@ else:
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': 'db_database',
             'USER': 'postgres',
-            'PASSWORD': 'abhishek',
+            'PASSWORD': 'muskan',
             'HOST': 'localhost',
             'PORT': '5432',
         }
