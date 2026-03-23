@@ -10,3 +10,5 @@ ENV/
 
 # Django files
 db.sqlite3
+
+kan-branch
